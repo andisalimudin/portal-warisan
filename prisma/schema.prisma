@@ -1,0 +1,192 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN_PUSAT    // Super Admin
+  ADMIN_NEGERI   // State Admin
+  ADMIN_KAWASAN  // Division/Area Admin
+  AHLI_BIASA     // Regular Member
+}
+
+enum Status {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  icNumber      String    @unique
+  fullName      String
+  email         String    @unique
+  passwordHash  String
+  phoneNumber   String
+  address       String?
+  state         String?
+  parliament    String?   // Parlimen
+  dun           String?   // Dewan Undangan Negeri
+  profileImage  String?   // URL to profile image
+  
+  role          Role      @default(AHLI_BIASA)
+  status        Status    @default(PENDING)
+  
+  // Referral System
+  referralCode  String    @unique @default(cuid())
+  referredBy    User?     @relation("Referrals", fields: [referredById], references: [id])
+  referredById  String?
+  referrals     User[]    @relation("Referrals")
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  auditLogs     AuditLog[]
+  messages      ChatMessage[]
+  chatParticipations ChatParticipant[]
+  messageReads  MessageRead[]
+  forumPosts    ForumPost[]
+  forumComments ForumComment[]
+  forumLikes    ForumLike[]
+  forumCommentLikes ForumCommentLike[]
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  details   String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Chat System
+enum ChatType {
+  DIRECT
+  GROUP
+  AREA
+  BRANCH
+  COMMITTEE
+}
+
+model ChatRoom {
+  id          String    @id @default(uuid())
+  name        String?   // Null for 1-on-1
+  type        ChatType  @default(DIRECT)
+  identifier  String?   // e.g., "area_P171" for auto-groups
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  participants ChatParticipant[]
+  messages    ChatMessage[]
+}
+
+model ChatParticipant {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatRoomId String
+  chatRoom  ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime @default(now())
+
+  @@unique([userId, chatRoomId])
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  content   String
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  chatRoomId String
+  chatRoom  ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  readBy    MessageRead[]
+}
+
+model MessageRead {
+  id        String   @id @default(uuid())
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt    DateTime @default(now())
+
+  @@unique([messageId, userId])
+}
+
+// Forum System
+model ForumCategory {
+  id        String   @id @default(uuid())
+  name      String   @unique // e.g., "General", "Policy", "Complaints"
+  description String?
+  posts     ForumPost[]
+  createdAt DateTime @default(now())
+}
+
+model ForumPost {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  categoryId String
+  category  ForumCategory @relation(fields: [categoryId], references: [id])
+  likes     ForumLike[]
+  comments  ForumComment[]
+  isPinned  Boolean @default(false) // For official announcements
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ForumComment {
+  id        String   @id @default(uuid())
+  content   String
+  postId    String
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentId  String?  // For nested replies
+  parent    ForumComment? @relation("Replies", fields: [parentId], references: [id])
+  replies   ForumComment[] @relation("Replies")
+  likes     ForumCommentLike[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ForumLike {
+  id        String   @id @default(uuid())
+  postId    String
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+}
+
+model ForumCommentLike {
+  id        String   @id @default(uuid())
+  commentId String
+  comment   ForumComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, userId])
+}

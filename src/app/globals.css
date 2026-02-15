@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --warisan-50: #e7ebf2;
+  --warisan-100: #cfd7e6;
+  --warisan-200: #a1b0cc;
+  --warisan-300: #7388b3;
+  --warisan-400: #456199;
+  --warisan-500: #1f3f7a;
+  --warisan-600: #163361;
+  --warisan-700: #0f274a;
+  --warisan-800: #091b34;
+  --warisan-900: #041021;
+  --warisan-950: #020811;
+  --warisan-sky-50: #e9f9ff;
+  --warisan-sky-100: #d0f2ff;
+  --warisan-sky-200: #a6e7ff;
+  --warisan-sky-300: #74dbff;
+  --warisan-sky-400: #4fd1ff;
+  --warisan-sky-500: #46caff;
+  --warisan-sky-600: #1aaee6;
+  --warisan-sky-700: #0f88b3;
+  --warisan-sky-800: #0b6380;
+  --warisan-sky-900: #083f52;
+  --warisan-sky-950: #042736;
+  --warisan-accent-50: #ffe8e8;
+  --warisan-accent-100: #ffcccc;
+  --warisan-accent-200: #ff9999;
+  --warisan-accent-300: #ff6666;
+  --warisan-accent-400: #ff3333;
+  --warisan-accent-500: #ff0000;
+  --warisan-accent-600: #cc0000;
+  --warisan-accent-700: #990000;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-warisan-50: var(--warisan-50);
+  --color-warisan-100: var(--warisan-100);
+  --color-warisan-200: var(--warisan-200);
+  --color-warisan-300: var(--warisan-300);
+  --color-warisan-400: var(--warisan-400);
+  --color-warisan-500: var(--warisan-500);
+  --color-warisan-600: var(--warisan-600);
+  --color-warisan-700: var(--warisan-700);
+  --color-warisan-800: var(--warisan-800);
+  --color-warisan-900: var(--warisan-900);
+  --color-warisan-950: var(--warisan-950);
+  --color-warisan-sky-50: var(--warisan-sky-50);
+  --color-warisan-sky-100: var(--warisan-sky-100);
+  --color-warisan-sky-200: var(--warisan-sky-200);
+  --color-warisan-sky-300: var(--warisan-sky-300);
+  --color-warisan-sky-400: var(--warisan-sky-400);
+  --color-warisan-sky-500: var(--warisan-sky-500);
+  --color-warisan-sky-600: var(--warisan-sky-600);
+  --color-warisan-sky-700: var(--warisan-sky-700);
+  --color-warisan-sky-800: var(--warisan-sky-800);
+  --color-warisan-sky-900: var(--warisan-sky-900);
+  --color-warisan-sky-950: var(--warisan-sky-950);
+  --color-warisan-accent-50: var(--warisan-accent-50);
+  --color-warisan-accent-100: var(--warisan-accent-100);
+  --color-warisan-accent-200: var(--warisan-accent-200);
+  --color-warisan-accent-300: var(--warisan-accent-300);
+  --color-warisan-accent-400: var(--warisan-accent-400);
+  --color-warisan-accent-500: var(--warisan-accent-500);
+  --color-warisan-accent-600: var(--warisan-accent-600);
+  --color-warisan-accent-700: var(--warisan-accent-700);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
