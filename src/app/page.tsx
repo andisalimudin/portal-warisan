@@ -38,28 +38,44 @@ export default function Home() {
       </header>
 
       <main className="flex-1">
-        <section className="bg-warisan-50 py-20">
-          <div className="container mx-auto px-4 text-center max-w-4xl">
-            <h1 className="text-4xl md:text-6xl font-extrabold text-warisan-950 mb-6 tracking-tight">
-              Membangun Masa Depan Malaysia Yang Lebih Gemilang
-            </h1>
-            <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-              Sertai perjuangan kami untuk menegakkan keadilan, perpaduan, dan kemajuan untuk semua rakyat Malaysia tanpa mengira kaum dan agama.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <Link
-                href="/register"
-                className="w-full sm:w-auto px-8 py-3 bg-warisan-accent-500 text-white rounded-lg font-semibold hover:bg-warisan-accent-600 transition-all flex items-center justify-center"
-              >
-                Sertai Kami Sekarang
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
-              <Link
-                href="#visi"
-                className="w-full sm:w-auto px-8 py-3 bg-white border border-warisan-200 text-warisan-950 rounded-lg font-semibold hover:bg-warisan-50 transition-all"
-              >
-                Ketahui Lebih Lanjut
-              </Link>
+        <section className="bg-warisan-50 py-12 md:py-20">
+          <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center max-w-6xl">
+            <div className="text-left">
+              <h1 className="text-4xl md:text-6xl font-extrabold text-warisan-950 mb-6 tracking-tight leading-tight">
+                Membangun Masa Depan <span className="text-warisan-600">Sungai Sibuga</span>
+              </h1>
+              <p className="text-lg text-gray-600 mb-8 max-w-xl">
+                Sertai perjuangan kami untuk menegakkan keadilan, perpaduan, dan kemajuan untuk semua rakyat di N.52 Sungai Sibuga. Bersama Lisa Hassan Alban untuk masa depan yang lebih baik.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <Link
+                  href="/register"
+                  className="w-full sm:w-auto px-8 py-3 bg-warisan-accent-500 text-white rounded-lg font-semibold hover:bg-warisan-accent-600 transition-all flex items-center justify-center shadow-lg shadow-warisan-accent-200"
+                >
+                  Daftar Ahli Sekarang
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Link>
+                <Link
+                  href="#visi"
+                  className="w-full sm:w-auto px-8 py-3 bg-white border border-warisan-200 text-warisan-950 rounded-lg font-semibold hover:bg-warisan-50 transition-all"
+                >
+                  Ketahui Manifesto
+                </Link>
+              </div>
+            </div>
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-warisan-600 to-warisan-400 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+              <div className="relative bg-white p-2 rounded-2xl shadow-2xl border border-warisan-100 overflow-hidden">
+                <img
+                  src="/images/manifesto.jpg"
+                  alt="Manifesto Lisa Hassan Alban N.52 Sungai Sibuga"
+                  className="rounded-xl w-full h-auto transform transition duration-500 hover:scale-[1.02]"
+                  loading="eager"
+                />
+                <div className="absolute bottom-4 right-4 bg-warisan-950/80 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold border border-white/20">
+                  CALON NO. 02
+                </div>
+              </div>
             </div>
           </div>
         </section>
