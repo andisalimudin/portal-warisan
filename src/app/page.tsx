@@ -85,25 +85,25 @@ export default function Home() {
             <div className="text-center mb-16">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">Prinsip Perjuangan Kami</h2>
               <p className="text-gray-600 max-w-2xl mx-auto">
-                Berlandaskan prinsip demokrasi dan keadilan sosial.
+                Berlandaskan prinsip demokrasi, keadilan sosial dan pembelaan hak rakyat Sabah.
               </p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
               <Card
                 icon={<Users className="w-8 h-8 text-warisan-700" />}
-                title="Perpaduan Nasional"
-                desc="Memupuk semangat bersatu padu di kalangan rakyat berbilang kaum."
+                title="Komited Memperjuangkan MA63"
+                desc="Memastikan hak dan kedudukan Sabah dalam Perjanjian Malaysia 1963 dihormati dan dilaksanakan demi masa depan rakyat Sungai Sibuga."
               />
               <Card
                 icon={<Shield className="w-8 h-8 text-warisan-700" />}
-                title="Integriti & Ketelusan"
-                desc="Menolak rasuah dan memastikan tadbir urus yang bersih dan amanah."
+                title="Memperkasa Program Pendidikan"
+                desc="Menambah baik akses pendidikan, program bimbingan dan sokongan untuk anak-anak Sungai Sibuga daripada sekolah rendah hingga ke IPT."
               />
               <Card
                 icon={<Globe className="w-8 h-8 text-warisan-700" />}
-                title="Kemajuan Ekonomi"
-                desc="Memacu ekonomi digital dan mampan untuk kesejahteraan rakyat."
+                title="Meningkatkan Perkhidmatan Kesihatan"
+                desc="Memperjuangkan fasiliti kesihatan yang lebih lengkap, perkhidmatan rawatan yang lebih cekap dan mudah diakses oleh penduduk setempat."
               />
             </div>
           </div>
