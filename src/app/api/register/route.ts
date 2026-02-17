@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z, ZodError } from "zod";
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 
 const registerSchema = z.object({
   fullName: z.string().min(3),
@@ -24,6 +24,8 @@ export async function POST(req: Request) {
 
     const icNumber = parsed.icNumber.trim();
     const email = parsed.email.trim().toLowerCase();
+
+    const prisma = getPrisma();
 
     const existing = await prisma.user.findFirst({
       where: {
@@ -101,4 +103,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
