@@ -7,15 +7,74 @@ import Image from "next/image";
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    setError(null);
+    setSuccess(null);
+
+    const formData = new FormData(event.currentTarget);
+
+    const fullName = String(formData.get("name") || "").trim();
+    const icNumber = String(formData.get("ic") || "").trim();
+    const phoneNumber = String(formData.get("phone") || "").trim();
+    const email = String(formData.get("email") || "").trim();
+    const referralCode = String(formData.get("referral") || "").trim();
+    const address = String(formData.get("address") || "").trim();
+    const state = String(formData.get("state") || "").trim();
+    const parliament = String(formData.get("parliament") || "").trim();
+    const dun = String(formData.get("dun") || "").trim();
+    const password = String(formData.get("password") || "");
+    const confirmPassword = String(formData.get("confirmPassword") || "");
+
+    if (password.length < 8) {
+      setError("Kata laluan mesti sekurang-kurangnya 8 aksara.");
       setIsLoading(false);
-      alert("Pendaftaran berjaya! Sila semak emel anda.");
-    }, 2000);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Sahkan kata laluan tidak sepadan.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName,
+          icNumber,
+          phoneNumber,
+          email,
+          referralCode: referralCode || undefined,
+          address: address || undefined,
+          state: state || undefined,
+          parliament: parliament || undefined,
+          dun: dun || undefined,
+          password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result.error || "Pendaftaran gagal. Sila cuba lagi.");
+      } else {
+        setSuccess("Pendaftaran berjaya! Permohonan anda akan disemak oleh admin.");
+        event.currentTarget.reset();
+      }
+    } catch {
+      setError("Ralat rangkaian. Sila cuba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -122,6 +181,111 @@ export default function RegisterPage() {
                 />
               </div>
             </div>
+
+            <div>
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                Alamat Surat-Menyurat
+              </label>
+              <div className="mt-1">
+                <input
+                  id="address"
+                  name="address"
+                  type="text"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-warisan-500 focus:border-warisan-500 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="state" className="block text-sm font-medium text-gray-700">
+                  Negeri
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="state"
+                    name="state"
+                    type="text"
+                    placeholder="Contoh: Sabah"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-warisan-500 focus:border-warisan-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="parliament" className="block text-sm font-medium text-gray-700">
+                  Parlimen
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="parliament"
+                    name="parliament"
+                    type="text"
+                    placeholder="Contoh: Batu Sapi"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-warisan-500 focus:border-warisan-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="dun" className="block text-sm font-medium text-gray-700">
+                  DUN
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="dun"
+                    name="dun"
+                    type="text"
+                    placeholder="Contoh: N.52 Sungai Sibuga"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-warisan-500 focus:border-warisan-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Kata Laluan
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-warisan-500 focus:border-warisan-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                Sahkan Kata Laluan
+              </label>
+              <div className="mt-1">
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-warisan-500 focus:border-warisan-500 sm:text-sm"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <p className="text-sm text-red-600">
+                {error}
+              </p>
+            )}
+
+            {success && (
+              <p className="text-sm text-green-600">
+                {success}
+              </p>
+            )}
 
             <div>
               <button
