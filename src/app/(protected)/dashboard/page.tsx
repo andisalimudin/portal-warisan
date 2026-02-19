@@ -2,6 +2,8 @@ import { QrCode, UserCheck, Users, Activity, Map as MapIcon } from "lucide-react
 import Image from "next/image";
 
 export default function DashboardPage() {
+  const branchName = "";
+
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
@@ -22,10 +24,10 @@ export default function DashboardPage() {
           value="240 Pts" 
           icon={<Activity className="w-6 h-6 text-warisan-accent-600" />} 
         />
-         <StatCard 
-          title="Kawasan" 
-          value="N.52 Sungai Sibuga" 
-          icon={<Activity className="w-6 h-6 text-warisan-500" />} 
+        <StatCard 
+          title="Cawangan" 
+          value={branchName || "Tiada"} 
+          icon={<MapIcon className="w-6 h-6 text-warisan-500" />} 
         />
       </div>
 
