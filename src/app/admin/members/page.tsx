@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { 
   UserPlus, Upload, Download, Search, Filter, 
@@ -20,14 +20,6 @@ type Member = {
   joinedAt: string;
 };
 
-const INITIAL_MEMBERS: Member[] = [
-  { id: "1", name: "Ali Bin Abu", memberId: "WAR-0001", phone: "012-3456789", email: "ali@example.com", branch: "Cawangan Kg. Tinusa 2", role: "AHLI", status: "AKTIF", joinedAt: "2024-06-12" },
-  { id: "2", name: "Siti Binti Amin", memberId: "WAR-0023", phone: "013-5553322", email: "siti@example.com", branch: "Cawangan Batu 8", role: "KETUA_CAWANGAN", status: "AKTIF", joinedAt: "2023-11-05" },
-  { id: "3", name: "John Doe", memberId: "WAR-0145", phone: "017-8882211", email: "john@example.com", branch: "Cawangan Taman Mawar", role: "AHLI", status: "MENUNGGU", joinedAt: "2026-01-10" },
-  { id: "4", name: "Mary Anne", memberId: "WAR-0199", phone: "016-4411223", email: "mary@example.com", branch: "Cawangan Taman Sibuga", role: "AHLI", status: "DIGANTUNG", joinedAt: "2022-03-18" },
-  { id: "5", name: "Rahim Musa", memberId: "WAR-0205", phone: "012-1122334", email: "rahim@example.com", branch: "Cawangan Rancangan Lubuh", role: "ADMIN", status: "AKTIF", joinedAt: "2021-09-01" },
-];
-
 function getStatusBadge(status: Member["status"]) {
   if (status === "AKTIF") return "bg-green-100 text-green-700 border-green-200";
   if (status === "DIGANTUNG") return "bg-orange-100 text-orange-700 border-orange-200";
@@ -42,7 +34,9 @@ function getRoleBadge(role: Member["role"]) {
 }
 
 export default function MembersPage() {
-  const [members, setMembers] = useState<Member[]>(INITIAL_MEMBERS);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"" | Member["status"]>("");
   const [roleFilter, setRoleFilter] = useState<"" | Member["role"]>("");
@@ -52,6 +46,40 @@ export default function MembersPage() {
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [showFilters, setShowFilters] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadMembers() {
+      try {
+        const res = await fetch("/api/admin/members");
+        const data = await res.json();
+
+        if (!res.ok) {
+          setLoadError(data.error || "Gagal memuatkan senarai ahli.");
+          return;
+        }
+
+        if (active) {
+          setMembers(data.members || []);
+        }
+      } catch {
+        if (active) {
+          setLoadError("Ralat rangkaian semasa memuatkan senarai ahli.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadMembers();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     return members.filter(m => {
@@ -243,6 +271,12 @@ export default function MembersPage() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4">
+        {loading && (
+          <p className="text-sm text-gray-500">Memuatkan senarai ahli...</p>
+        )}
+        {loadError && (
+          <p className="text-sm text-red-600">{loadError}</p>
+        )}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="relative">
