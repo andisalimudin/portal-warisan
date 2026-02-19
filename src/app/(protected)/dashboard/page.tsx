@@ -3,6 +3,7 @@ import Image from "next/image";
 
 export default function DashboardPage() {
   const branchName = "";
+  const hasBranch = !!branchName;
 
   return (
     <div className="space-y-6">
@@ -28,6 +29,7 @@ export default function DashboardPage() {
           title="Cawangan" 
           value={branchName || "Tiada"} 
           icon={<MapIcon className="w-6 h-6 text-warisan-500" />} 
+          actionLabel={hasBranch ? "Mohon Ubah Cawangan" : "Mohon Cawangan"} 
         />
       </div>
 
@@ -109,21 +111,30 @@ function StatCard({
   value,
   icon,
   statusColor = "text-gray-900",
+  actionLabel,
 }: {
   title: string;
   value: string;
   icon: React.ReactNode;
   statusColor?: string;
+  actionLabel?: string;
 }) {
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
-        <p className={`text-2xl font-bold ${statusColor}`}>{value}</p>
+    <div className="bg-white p-6 rounded-xl shadow-sm border flex flex-col justify-between">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
+          <p className={`text-2xl font-bold ${statusColor}`}>{value}</p>
+        </div>
+        <div className="p-3 bg-warisan-50 rounded-lg">
+          {icon}
+        </div>
       </div>
-      <div className="p-3 bg-warisan-50 rounded-lg">
-        {icon}
-      </div>
+      {actionLabel && (
+        <button className="mt-4 inline-flex items-center justify-center rounded-md border border-warisan-200 bg-warisan-50 px-3 py-1.5 text-xs font-medium text-warisan-800 hover:bg-warisan-100 transition-colors">
+          {actionLabel}
+        </button>
+      )}
     </div>
   )
 }

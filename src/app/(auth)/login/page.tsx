@@ -8,17 +8,46 @@ import Image from "next/image";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    setError(null);
+
+    const formData = new FormData(event.currentTarget);
+    const identifier = String(formData.get("identifier") || "").trim();
+    const password = String(formData.get("password") || "");
+
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ identifier, password }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result.error || "Log masuk gagal. Sila cuba lagi.");
+        return;
+      }
+
+      const role = result.user?.role as string | undefined;
+
+      if (role && role.startsWith("ADMIN")) {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/dashboard");
+      }
+    } catch {
+      setError("Ralat rangkaian. Sila cuba lagi.");
+    } finally {
       setIsLoading(false);
-      // Redirect to dashboard
-      router.push("/dashboard");
-    }, 1500);
+    }
   }
 
   return (
@@ -116,6 +145,11 @@ export default function LoginPage() {
                 )}
               </button>
             </div>
+            {error && (
+              <p className="text-sm text-red-600">
+                {error}
+              </p>
+            )}
           </form>
 
           <div className="mt-6">
