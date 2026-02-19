@@ -1,36 +1,113 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { User, MapPin, Calendar, Camera, Save, Lock, Shield, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
-// Mock User Data
-const MOCK_USER = {
-  id: "WARISAN-2024-001",
-  fullName: "Ali bin Abu",
-  email: "ali.abu@example.com",
-  phone: "012-3456789",
-  icNumber: "850101-12-5555",
-  address: "Lot 123, Taman Mawar, Jalan Sibuga",
-  city: "Sandakan",
-  state: "Sabah",
-  parliament: "P.184 Libaran",
-  dun: "N.52 Sungai Sibuga",
-  role: "AHLI_BIASA",
-  joinDate: "2024-01-15",
-  status: "ACTIVE",
-  profileImage: null as string | null, // Correctly type as string or null
+type UserProfile = {
+  id: string;
+  fullName: string;
+  email: string | null;
+  phone: string | null;
+  icNumber: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  parliament: string | null;
+  dun: string | null;
+  role: string;
+  joinDate: string;
+  status: string;
+  profileImage: string | null;
 };
+
+function formatRole(role: string) {
+  if (role === "AHLI_BIASA") return "Ahli Biasa";
+  if (role.startsWith("ADMIN")) return "Admin";
+  return role.replace("_", " ");
+}
+
+function formatStatus(status: string) {
+  if (status === "APPROVED") return "Aktif";
+  if (status === "PENDING") return "Menunggu Kelulusan";
+  if (status === "SUSPENDED") return "Digantung";
+  if (status === "REJECTED") return "Ditolak";
+  return status;
+}
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
-  const [user, setUser] = useState(MOCK_USER);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'security'>('info');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const raw = window.localStorage.getItem("warisan_user");
+
+    if (!raw) {
+      setError("Sesi anda telah tamat. Sila log masuk semula.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const basicUser = JSON.parse(raw) as { id?: string };
+
+      if (!basicUser.id) {
+        setError("Maklumat pengguna tidak sah. Sila log masuk semula.");
+        setLoading(false);
+        return;
+      }
+
+      (async () => {
+        try {
+          const res = await fetch(`/api/profile?userId=${encodeURIComponent(basicUser.id)}`);
+          const data = await res.json();
+
+          if (!res.ok) {
+            setError(data.error || "Gagal memuatkan profil.");
+            return;
+          }
+
+          const u = data.user;
+
+          const profile: UserProfile = {
+            id: u.id,
+            fullName: u.fullName ?? "",
+            email: u.email ?? null,
+            phone: u.phoneNumber ?? null,
+            icNumber: u.icNumber ?? null,
+            address: u.address ?? null,
+            city: u.city ?? null,
+            state: u.state ?? null,
+            parliament: u.parliament ?? null,
+            dun: u.dun ?? null,
+            role: u.role ?? "",
+            joinDate: u.createdAt ? new Date(u.createdAt).toISOString().slice(0, 10) : "",
+            status: u.status ?? "",
+            profileImage: null,
+          };
+
+          setUser(profile);
+        } catch {
+          setError("Ralat rangkaian semasa memuatkan profil.");
+        } finally {
+          setLoading(false);
+        }
+      })();
+    } catch {
+      setError("Maklumat sesi tidak sah. Sila log masuk semula.");
+      setLoading(false);
+    }
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setUser(prev => ({ ...prev, [name]: value }));
+    setUser(prev => (prev ? { ...prev, [name]: value } : prev));
   };
 
   const handleSave = () => {
@@ -44,9 +121,29 @@ export default function ProfilePage() {
     if (file) {
       // Create local URL for preview
       const imageUrl = URL.createObjectURL(file);
-      setUser(prev => ({ ...prev, profileImage: imageUrl }));
+      setUser(prev => (prev ? { ...prev, profileImage: imageUrl } : prev));
     }
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <p className="text-sm text-gray-500">Memuatkan profil...</p>
+      </div>
+    );
+  }
+
+  if (error || !user) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <p className="text-sm text-red-600">
+          {error || "Profil tidak dapat dimuatkan."}
+        </p>
+      </div>
+    );
+  }
+
+  const profile = user;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -58,16 +155,16 @@ export default function ProfilePage() {
           {/* Profile Image */}
           <div className="relative group">
             <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-200 flex items-center justify-center overflow-hidden shadow-lg">
-              {user.profileImage ? (
+              {profile.profileImage ? (
                 <Image 
-                  src={user.profileImage} 
-                  alt={user.fullName} 
+                  src={profile.profileImage} 
+                  alt={profile.fullName} 
                   width={128} 
                   height={128} 
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <User className="w-16 h-16 text-gray-400" />
+                  <User className="w-16 h-16 text-gray-400" />
               )}
             </div>
             <label 
@@ -87,19 +184,19 @@ export default function ProfilePage() {
 
           {/* Basic Info */}
           <div className="flex-1 text-center sm:text-left pb-2">
-            <h1 className="text-2xl font-bold text-gray-900">{user.fullName}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{profile.fullName}</h1>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-2 text-sm text-gray-600">
               <span className="flex items-center gap-1">
                 <Shield className="w-4 h-4 text-warisan-600" />
-                {user.role.replace('_', ' ')}
+                {formatRole(profile.role)}
               </span>
               <span className="flex items-center gap-1">
                 <MapPin className="w-4 h-4 text-gray-400" />
-                {user.parliament}
+                {profile.parliament || "Parlimen belum ditetapkan"}
               </span>
               <span className="flex items-center gap-1">
                 <Calendar className="w-4 h-4 text-gray-400" />
-                Ahli sejak {new Date(user.joinDate).getFullYear()}
+                Ahli sejak {profile.joinDate ? new Date(profile.joinDate).getFullYear() : "-"}
               </span>
             </div>
           </div>
@@ -174,19 +271,19 @@ export default function ProfilePage() {
                     <input 
                       type="text" 
                       name="fullName"
-                      value={user.fullName}
+                      value={profile.fullName}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-warisan-500 focus:border-transparent"
                     />
                   ) : (
-                    <p className="text-gray-900 font-medium">{user.fullName}</p>
+                    <p className="text-gray-900 font-medium">{profile.fullName}</p>
                   )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1">No. Kad Pengenalan</label>
                   <p className="text-gray-900 font-medium flex items-center gap-2">
-                    {user.icNumber}
+                    {profile.icNumber}
                     <BadgeCheck className="w-4 h-4 text-green-500" />
                   </p>
                 </div>
@@ -197,18 +294,18 @@ export default function ProfilePage() {
                     <input 
                       type="tel" 
                       name="phone"
-                      value={user.phone}
+                      value={profile.phone || ""}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-warisan-500 focus:border-transparent"
                     />
                   ) : (
-                    <p className="text-gray-900 font-medium">{user.phone}</p>
+                    <p className="text-gray-900 font-medium">{profile.phone || "-"}</p>
                   )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1">Alamat Emel</label>
-                  <p className="text-gray-900 font-medium">{user.email}</p>
+                  <p className="text-gray-900 font-medium">{profile.email}</p>
                 </div>
               </div>
             </div>
@@ -223,12 +320,12 @@ export default function ProfilePage() {
                     <input 
                       type="text" 
                       name="address"
-                      value={user.address}
+                      value={profile.address || ""}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-warisan-500 focus:border-transparent"
                     />
                   ) : (
-                    <p className="text-gray-900 font-medium">{user.address}</p>
+                    <p className="text-gray-900 font-medium">{profile.address || "-"}</p>
                   )}
                 </div>
 
@@ -239,28 +336,28 @@ export default function ProfilePage() {
                       <input 
                         type="text" 
                         name="city"
-                        value={user.city}
+                        value={profile.city || ""}
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-warisan-500 focus:border-transparent"
                       />
                     ) : (
-                      <p className="text-gray-900 font-medium">{user.city}</p>
+                      <p className="text-gray-900 font-medium">{profile.city || "-"}</p>
                     )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-500 mb-1">Negeri</label>
-                    <p className="text-gray-900 font-medium">{user.state}</p>
+                    <p className="text-gray-900 font-medium">{profile.state || "-"}</p>
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1">Parlimen</label>
-                  <p className="text-gray-900 font-medium">{user.parliament}</p>
+                  <p className="text-gray-900 font-medium">{profile.parliament || "-"}</p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-500 mb-1">DUN</label>
-                  <p className="text-gray-900 font-medium">{user.dun}</p>
+                  <p className="text-gray-900 font-medium">{profile.dun || "-"}</p>
                 </div>
               </div>
             </div>
