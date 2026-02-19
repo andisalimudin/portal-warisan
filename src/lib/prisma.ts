@@ -3,7 +3,7 @@ import { withAccelerate } from "@prisma/extension-accelerate";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const globalForPrisma = globalThis as unknown as {
-  prisma?: PrismaClient;
+  prisma?: unknown;
 };
 
 export function getPrisma(): PrismaClient {
@@ -31,5 +31,5 @@ export function getPrisma(): PrismaClient {
     }
   }
 
-  return globalForPrisma.prisma!;
+  return globalForPrisma.prisma as PrismaClient;
 }
