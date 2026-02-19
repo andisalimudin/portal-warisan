@@ -44,9 +44,9 @@ export async function POST(req: Request) {
       );
     }
 
-    if (user.status !== "APPROVED") {
+    if (user.status === "SUSPENDED" || user.status === "REJECTED") {
       return NextResponse.json(
-        { error: "Keahlian anda belum diluluskan." },
+        { error: "Keahlian anda tidak aktif. Sila hubungi admin." },
         { status: 403 }
       );
     }

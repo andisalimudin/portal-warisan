@@ -1,7 +1,8 @@
 "use client";
-
+ 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { LayoutDashboard, User, Users, MessageSquare, LogOut, Settings, Target, DollarSign, ClipboardList, Menu, X } from "lucide-react";
 import Image from "next/image";
 
@@ -11,6 +12,36 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const raw = window.localStorage.getItem("warisan_user");
+
+    if (!raw) {
+      router.replace("/login");
+      return;
+    }
+
+    try {
+      const user = JSON.parse(raw);
+      const role = String(user?.role || "");
+
+      if (role.startsWith("ADMIN")) {
+        router.replace("/admin/dashboard");
+      }
+    } catch {
+      router.replace("/login");
+    }
+  }, [router]);
+
+  function handleLogout() {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("warisan_user");
+    }
+    router.push("/login");
+  }
 
   return (
     <div className="min-h-screen bg-warisan-50 flex">
@@ -41,7 +72,11 @@ export default function ProtectedLayout({
           </nav>
         </div>
         <div className="p-4 border-t border-warisan-800">
-          <button className="flex items-center space-x-3 text-warisan-200 hover:text-white w-full transition-colors">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex items-center space-x-3 text-warisan-200 hover:text-white w-full transition-colors"
+          >
             <LogOut className="w-5 h-5" />
             <span>Log Keluar</span>
           </button>
@@ -116,7 +151,11 @@ export default function ProtectedLayout({
                 </nav>
               </div>
               <div className="p-4 border-t border-warisan-800">
-                <button className="flex items-center space-x-3 text-warisan-200 hover:text-white w-full transition-colors">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex items-center space-x-3 text-warisan-200 hover:text-white w-full transition-colors"
+                >
                   <LogOut className="w-5 h-5" />
                   <span>Log Keluar</span>
                 </button>

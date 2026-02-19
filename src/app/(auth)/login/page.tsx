@@ -38,6 +38,13 @@ export default function LoginPage() {
 
       const role = result.user?.role as string | undefined;
 
+      if (typeof window !== "undefined" && result.user) {
+        try {
+          window.localStorage.setItem("warisan_user", JSON.stringify(result.user));
+        } catch {
+        }
+      }
+
       if (role && role.startsWith("ADMIN")) {
         router.push("/admin/dashboard");
       } else {
