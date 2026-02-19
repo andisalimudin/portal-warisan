@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z, ZodError } from "zod";
+import type { PrismaClient } from "@prisma/client";
 import { getPrisma } from "@/lib/prisma";
 
 const loginSchema = z.object({
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
     const identifier = parsed.identifier.trim();
     const password = parsed.password;
 
-    const prisma = getPrisma();
+    const prisma = getPrisma() as PrismaClient;
 
     const user = await prisma.user.findFirst({
       where: {
