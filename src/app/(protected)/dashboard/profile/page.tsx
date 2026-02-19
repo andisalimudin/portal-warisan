@@ -56,16 +56,17 @@ export default function ProfilePage() {
 
     try {
       const basicUser = JSON.parse(raw) as { id?: string };
+      const userId = basicUser.id;
 
-      if (!basicUser.id) {
+      if (!userId) {
         setError("Maklumat pengguna tidak sah. Sila log masuk semula.");
         setLoading(false);
         return;
       }
 
-      (async () => {
+      async function fetchProfile(id: string) {
         try {
-          const res = await fetch(`/api/profile?userId=${encodeURIComponent(basicUser.id)}`);
+          const res = await fetch(`/api/profile?userId=${encodeURIComponent(id)}`);
           const data = await res.json();
 
           if (!res.ok) {
@@ -98,7 +99,9 @@ export default function ProfilePage() {
         } finally {
           setLoading(false);
         }
-      })();
+      }
+
+      fetchProfile(userId);
     } catch {
       setError("Maklumat sesi tidak sah. Sila log masuk semula.");
       setLoading(false);
