@@ -1,5 +1,18 @@
 import { NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
+import { UserStatus } from "@prisma/client";
+
+function mapUserStatusToMemberStatus(status: UserStatus): "AKTIF" | "MENUNGGU" | "DIGANTUNG" {
+  if (status === "APPROVED") return "AKTIF";
+  if (status === "PENDING") return "MENUNGGU";
+  return "DIGANTUNG";
+}
+
+function mapMemberStatusToUserStatus(status: "AKTIF" | "MENUNGGU" | "DIGANTUNG"): UserStatus {
+  if (status === "AKTIF") return "APPROVED";
+  if (status === "MENUNGGU") return "PENDING";
+  return "SUSPENDED";
+}
 
 export async function GET() {
   try {
@@ -17,12 +30,7 @@ export async function GET() {
       email: u.email,
       branch: "",
       role: u.role === "AHLI_BIASA" ? "AHLI" : "ADMIN",
-      status:
-        u.status === "APPROVED"
-          ? "AKTIF"
-          : u.status === "PENDING"
-          ? "MENUNGGU"
-          : "DIGANTUNG",
+      status: mapUserStatusToMemberStatus(u.status),
       joinedAt: u.createdAt.toISOString().slice(0, 10),
     }));
 
@@ -37,3 +45,35 @@ export async function GET() {
   }
 }
 
+export async function PATCH(req: Request) {
+  try {
+    const prisma = getPrisma();
+    const body = await req.json().catch(() => ({}));
+
+    const ids = Array.isArray(body.ids) ? (body.ids as string[]) : [];
+    const status = body.status as "AKTIF" | "MENUNGGU" | "DIGANTUNG" | undefined;
+
+    if (!ids.length || !status) {
+      return NextResponse.json(
+        { error: "Parameter ids atau status tidak sah." },
+        { status: 400 }
+      );
+    }
+
+    const newStatus = mapMemberStatusToUserStatus(status);
+
+    await prisma.user.updateMany({
+      where: { id: { in: ids } },
+      data: { status: newStatus },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("ADMIN_MEMBERS_PATCH_ERROR", error);
+
+    return NextResponse.json(
+      { error: "Ralat semasa mengemas kini status ahli." },
+      { status: 500 }
+    );
+  }
+}

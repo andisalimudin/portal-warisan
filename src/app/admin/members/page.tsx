@@ -47,6 +47,19 @@ export default function MembersPage() {
   const [exporting, setExporting] = useState(false);
   const [showFilters, setShowFilters] = useState(true);
 
+  const persistStatus = async (ids: string[], status: Member["status"]) => {
+    try {
+      await fetch("/api/admin/members", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ids, status }),
+      });
+    } catch {
+    }
+  };
+
   useEffect(() => {
     let active = true;
 
@@ -117,17 +130,47 @@ export default function MembersPage() {
   };
 
   const bulkApprove = () => {
-    setMembers(prev => prev.map(m => selectedIds.includes(m.id) && m.status === "MENUNGGU" ? { ...m, status: "AKTIF" } : m));
+    const idsToUpdate = members
+      .filter(m => selectedIds.includes(m.id) && m.status === "MENUNGGU")
+      .map(m => m.id);
+
+    if (idsToUpdate.length === 0) {
+      clearSelection();
+      return;
+    }
+
+    setMembers(prev => prev.map(m => idsToUpdate.includes(m.id) ? { ...m, status: "AKTIF" } : m));
+    void persistStatus(idsToUpdate, "AKTIF");
     clearSelection();
   };
 
   const bulkSuspend = () => {
-    setMembers(prev => prev.map(m => selectedIds.includes(m.id) ? { ...m, status: "DIGANTUNG" } : m));
+    const idsToUpdate = members
+      .filter(m => selectedIds.includes(m.id) && m.status !== "DIGANTUNG")
+      .map(m => m.id);
+
+    if (idsToUpdate.length === 0) {
+      clearSelection();
+      return;
+    }
+
+    setMembers(prev => prev.map(m => idsToUpdate.includes(m.id) ? { ...m, status: "DIGANTUNG" } : m));
+    void persistStatus(idsToUpdate, "DIGANTUNG");
     clearSelection();
   };
 
   const bulkActivate = () => {
-    setMembers(prev => prev.map(m => selectedIds.includes(m.id) ? { ...m, status: "AKTIF" } : m));
+    const idsToUpdate = members
+      .filter(m => selectedIds.includes(m.id) && m.status !== "AKTIF")
+      .map(m => m.id);
+
+    if (idsToUpdate.length === 0) {
+      clearSelection();
+      return;
+    }
+
+    setMembers(prev => prev.map(m => idsToUpdate.includes(m.id) ? { ...m, status: "AKTIF" } : m));
+    void persistStatus(idsToUpdate, "AKTIF");
     clearSelection();
   };
 
@@ -413,7 +456,10 @@ export default function MembersPage() {
                       </button>
                       {m.status !== "AKTIF" && (
                         <button 
-                          onClick={() => setMembers(prev => prev.map(x => x.id === m.id ? { ...x, status: "AKTIF" } : x))}
+                          onClick={() => {
+                            setMembers(prev => prev.map(x => x.id === m.id ? { ...x, status: "AKTIF" } : x));
+                            void persistStatus([m.id], "AKTIF");
+                          }}
                           className="inline-flex items-center gap-1 px-2 py-1 rounded border border-gray-200 hover:bg-gray-100"
                         >
                           <CheckCircle className="w-4 h-4 text-green-600" /> Aktifkan
@@ -421,7 +467,10 @@ export default function MembersPage() {
                       )}
                       {m.status === "AKTIF" && (
                         <button 
-                          onClick={() => setMembers(prev => prev.map(x => x.id === m.id ? { ...x, status: "DIGANTUNG" } : x))}
+                          onClick={() => {
+                            setMembers(prev => prev.map(x => x.id === m.id ? { ...x, status: "DIGANTUNG" } : x));
+                            void persistStatus([m.id], "DIGANTUNG");
+                          }}
                           className="inline-flex items-center gap-1 px-2 py-1 rounded border border-gray-200 hover:bg-gray-100"
                         >
                           <Shield className="w-4 h-4 text-orange-600" /> Gantung

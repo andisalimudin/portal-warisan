@@ -6,12 +6,20 @@ import { useRouter } from "next/navigation";
 import { LayoutDashboard, User, Users, MessageSquare, LogOut, Settings, Target, DollarSign, ClipboardList, Menu, X } from "lucide-react";
 import Image from "next/image";
 
+function formatRole(role: string) {
+  if (role === "AHLI_BIASA") return "Ahli Biasa";
+  if (role.startsWith("ADMIN")) return "Admin";
+  return role.replace("_", " ");
+}
+
 export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [displayRole, setDisplayRole] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -25,8 +33,21 @@ export default function ProtectedLayout({
     }
 
     try {
-      const user = JSON.parse(raw);
+      const user = JSON.parse(raw) as { role?: string; fullName?: string };
       const role = String(user?.role || "");
+      const fullName = String(user?.fullName || "");
+
+      if (fullName) {
+        setDisplayName(fullName);
+      } else {
+        setDisplayName("Ahli Warisan");
+      }
+
+      if (role) {
+        setDisplayRole(formatRole(role));
+      } else {
+        setDisplayRole("Ahli Biasa");
+      }
 
       if (role.startsWith("ADMIN")) {
         router.replace("/admin/dashboard");
@@ -104,11 +125,15 @@ export default function ProtectedLayout({
           </div>
           <div className="flex items-center space-x-4">
             <div className="text-right hidden sm:block">
-              <div className="text-sm font-medium text-gray-900">Ali bin Abu</div>
-              <div className="text-xs text-gray-500">Ahli Biasa</div>
+              <div className="text-sm font-medium text-gray-900">
+                {displayName || "Ahli Warisan"}
+              </div>
+              <div className="text-xs text-gray-500">
+                {displayRole || "Ahli Biasa"}
+              </div>
             </div>
             <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-bold">
-              A
+              {(displayName || "A").trim().charAt(0).toUpperCase()}
             </div>
           </div>
         </header>
