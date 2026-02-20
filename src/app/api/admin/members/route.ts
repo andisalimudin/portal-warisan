@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
-import { UserStatus } from "@prisma/client";
 
-function mapUserStatusToMemberStatus(status: UserStatus): "AKTIF" | "MENUNGGU" | "DIGANTUNG" {
+type DbUserStatus = "APPROVED" | "PENDING" | "SUSPENDED" | "REJECTED";
+
+function mapUserStatusToMemberStatus(status: DbUserStatus): "AKTIF" | "MENUNGGU" | "DIGANTUNG" {
   if (status === "APPROVED") return "AKTIF";
   if (status === "PENDING") return "MENUNGGU";
   return "DIGANTUNG";
 }
 
-function mapMemberStatusToUserStatus(status: "AKTIF" | "MENUNGGU" | "DIGANTUNG"): UserStatus {
+function mapMemberStatusToUserStatus(status: "AKTIF" | "MENUNGGU" | "DIGANTUNG"): DbUserStatus {
   if (status === "AKTIF") return "APPROVED";
   if (status === "MENUNGGU") return "PENDING";
   return "SUSPENDED";
