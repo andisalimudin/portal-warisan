@@ -60,6 +60,19 @@ export default function MembersPage() {
     }
   };
 
+  const persistRole = async (ids: string[], role: Member["role"]) => {
+    try {
+      await fetch("/api/admin/members", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ids, role }),
+      });
+    } catch {
+    }
+  };
+
   useEffect(() => {
     let active = true;
 
@@ -175,7 +188,17 @@ export default function MembersPage() {
   };
 
   const bulkAssignRole = (role: Member["role"]) => {
-    setMembers(prev => prev.map(m => selectedIds.includes(m.id) ? { ...m, role } : m));
+    const idsToUpdate = members
+      .filter(m => selectedIds.includes(m.id))
+      .map(m => m.id);
+
+    if (!idsToUpdate.length) {
+      clearSelection();
+      return;
+    }
+
+    setMembers(prev => prev.map(m => idsToUpdate.includes(m.id) ? { ...m, role } : m));
+    void persistRole(idsToUpdate, role);
     clearSelection();
   };
 
@@ -255,6 +278,25 @@ export default function MembersPage() {
   const saveEdit = () => {
     if (!editForm) return;
     setMembers(prev => prev.map(m => m.id === editForm.id ? editForm : m));
+    void (async () => {
+      try {
+        await fetch("/api/admin/members", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: editForm.id,
+            name: editForm.name,
+            memberId: editForm.memberId,
+            phone: editForm.phone,
+            email: editForm.email,
+            role: editForm.role,
+          }),
+        });
+      } catch {
+      }
+    })();
     setShowEditId(null);
     setEditForm(null);
   };
