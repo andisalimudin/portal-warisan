@@ -1,73 +1,139 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, MessageSquare, Heart, Share2, MoreHorizontal, User, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useParams } from "next/navigation";
 
-// Mock Data
-const MOCK_POST = {
-  id: '1',
-  title: 'Pengumuman: Jadual Mesyuarat Agung Tahunan 2026',
-  content: `
-    <p class="mb-4">Assalamualaikum dan Salam Sejahtera kepada semua ahli N.52 Sungai Sibuga.</p>
-    <p class="mb-4">Sukacita dimaklumkan bahawa Mesyuarat Agung Tahunan (AGM) bagi tahun 2026 telah dijadualkan seperti berikut:</p>
-    <ul class="list-disc pl-5 mb-4">
-      <li><strong>Tarikh:</strong> 15 Mac 2026 (Ahad)</li>
-      <li><strong>Masa:</strong> 8:00 Pagi - 5:00 Petang</li>
-      <li><strong>Tempat:</strong> Dewan Hakka, Kota Kinabalu</li>
-    </ul>
-    <p class="mb-4">Semua perwakilan dari setiap Bahagian dan Cawangan diwajibkan hadir. Agenda mesyuarat dan laporan tahunan akan diedarkan melalui portal ini seminggu sebelum tarikh mesyuarat.</p>
-    <p>Sekian, terima kasih.</p>
-  `,
-  author: 'Setiausaha Agung',
-  role: 'ADMIN_PUSAT',
-  time: '2 jam lepas',
-  likes: 156,
-  comments: [
-    {
-      id: '1',
-      author: 'Ahmad bin Ali',
-      role: 'AHLI_BIASA',
-      content: 'Terima kasih atas makluman Tuan Setiausaha. Adakah pemerhati dibenarkan hadir?',
-      time: '1 jam lepas',
-      likes: 12
-    },
-    {
-      id: '2',
-      author: 'Sarah Tan',
-      role: 'ADMIN_KAWASAN',
-      content: 'Notis diterima. Kami dari PDM Taman Sibuga akan menghantar senarai perwakilan secepat mungkin.',
-      time: '45 minit lepas',
-      likes: 8
-    }
-  ]
+type ForumComment = {
+  id: string;
+  author: string;
+  authorRole: string;
+  content: string;
+  createdAt: string;
+  likes: number;
+};
+
+type ForumPostDetail = {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  authorRole: string;
+  createdAt: string;
+  likes: number;
+  comments: ForumComment[];
 };
 
 export default function ForumDetailPage() {
   const params = useParams();
-  const [commentInput, setCommentInput] = useState('');
-  const [comments, setComments] = useState(MOCK_POST.comments);
+  const [post, setPost] = useState<ForumPostDetail | null>(null);
+  const [comments, setComments] = useState<ForumComment[]>([]);
+  const [commentInput, setCommentInput] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // In a real app, fetch post by params.id
-  const post = MOCK_POST; 
+  useEffect(() => {
+    let active = true;
 
-  const handleCommentSubmit = (e: React.FormEvent) => {
+    if (typeof window !== "undefined") {
+      const raw = window.localStorage.getItem("warisan_user");
+      if (raw) {
+        try {
+          const basic = JSON.parse(raw) as { id?: string };
+          if (basic.id) {
+            setUserId(String(basic.id));
+          }
+        } catch {
+        }
+      }
+    }
+
+    async function load() {
+      try {
+        const id = String(params?.id || "");
+        if (!id) {
+          setError("ID topik tidak sah.");
+          setLoading(false);
+          return;
+        }
+
+        const res = await fetch(`/api/forum/${encodeURIComponent(id)}`);
+        const data = await res.json();
+
+        if (!active) return;
+
+        if (!res.ok) {
+          setError(data.error || "Gagal memuatkan topik forum.");
+          return;
+        }
+
+        setPost(data.post);
+        setComments(Array.isArray(data.post?.comments) ? data.post.comments : []);
+      } catch {
+        if (active) {
+          setError("Ralat rangkaian semasa memuatkan topik.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, [params]);
+
+  function formatTime(input: string) {
+    const date = new Date(input);
+    if (Number.isNaN(date.getTime())) return "";
+
+    const diffMs = Date.now() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / 60000);
+    if (diffMinutes < 1) return "Baru saja";
+    if (diffMinutes < 60) return `${diffMinutes} minit lepas`;
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours} jam lepas`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays} hari lepas`;
+    return date.toLocaleDateString("ms-MY");
+  }
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentInput.trim()) return;
+    if (!post) return;
+    if (!userId) return;
 
-    const newComment = {
-      id: Date.now().toString(),
-      author: 'Anda',
-      role: 'AHLI_BIASA',
-      content: commentInput,
-      time: 'Baru saja',
-      likes: 0
-    };
+    try {
+      const res = await fetch(`/api/forum/${encodeURIComponent(post.id)}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          content: commentInput.trim(),
+        }),
+      });
 
-    setComments([...comments, newComment]);
-    setCommentInput('');
+      const data = await res.json();
+
+      if (!res.ok) {
+        return;
+      }
+
+      const created = data.comment as ForumComment;
+      setComments((prev) => [...prev, created]);
+      setCommentInput("");
+    } catch {
+    }
   };
 
   return (
@@ -76,6 +142,25 @@ export default function ForumDetailPage() {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Kembali ke Forum
       </Link>
+
+      {loading && (
+        <p className="text-sm text-gray-500 mb-4">
+          Memuatkan topik forum...
+        </p>
+      )}
+      {error && (
+        <p className="text-sm text-red-600 mb-4">
+          {error}
+        </p>
+      )}
+
+      {!post && !loading && !error && (
+        <p className="text-sm text-gray-500">
+          Topik tidak dijumpai.
+        </p>
+      )}
+
+      {!post ? null : (
 
       {/* Main Post */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
@@ -89,10 +174,10 @@ export default function ForumDetailPage() {
                 <h3 className="font-bold text-gray-900">{post.author}</h3>
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <span className="bg-warisan-50 text-warisan-700 px-2 py-0.5 rounded font-medium border border-warisan-100">
-                    {post.role.replace('_', ' ')}
+                    {post.authorRole.replace("_", " ")}
                   </span>
                   <span>•</span>
-                  <span>{post.time}</span>
+                  <span>{formatTime(post.createdAt)}</span>
                 </div>
               </div>
             </div>

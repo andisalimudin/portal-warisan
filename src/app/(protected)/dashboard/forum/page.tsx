@@ -1,61 +1,109 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MessageSquare, Heart, Share2, Plus, Search, Filter, Pin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Mock Data
-const FORUM_CATEGORIES = [
-  { id: 'all', name: 'Semua Topik' },
-  { id: 'announcement', name: 'Pengumuman Rasmi' },
-  { id: 'policy', name: 'Dasar Parti' },
-  { id: 'complaints', name: 'Aduan & Cadangan' },
-  { id: 'general', name: 'Umum' },
-];
+type ForumCategory = {
+  id: string;
+  name: string;
+  description: string;
+};
 
-const FORUM_POSTS = [
-  {
-    id: '1',
-    title: 'Pengumuman: Jadual Mesyuarat Agung Tahunan 2026',
-    excerpt: 'Dimaklumkan bahawa Mesyuarat Agung Tahunan akan diadakan pada bulan hadapan...',
-    author: 'Setiausaha Agung',
-    category: 'announcement',
-    likes: 156,
-    comments: 42,
-    time: '2 jam lepas',
-    isPinned: true,
-  },
-  {
-    id: '2',
-    title: 'Cadangan penambahbaikan sistem pendaftaran ahli baru',
-    excerpt: 'Saya mencadangkan agar proses pengesahan OTP dipercepatkan untuk kawasan pedalaman...',
-    author: 'Ahli P.171',
-    category: 'complaints',
-    likes: 34,
-    comments: 12,
-    time: '5 jam lepas',
-    isPinned: false,
-  },
-  {
-    id: '3',
-    title: 'Perbincangan Belanjawan Negeri Sabah 2026',
-    excerpt: 'Apakah pandangan rakan-rakan mengenai peruntukan pembangunan luar bandar?',
-    author: 'Ketua Pemuda',
-    category: 'policy',
-    likes: 89,
-    comments: 56,
-    time: '1 hari lepas',
-    isPinned: false,
-  },
-];
+type ForumPostListItem = {
+  id: string;
+  title: string;
+  excerpt: string;
+  author: string;
+  authorRole: string;
+  categoryId: string;
+  categoryName: string;
+  likes: number;
+  comments: number;
+  createdAt: string;
+  isPinned: boolean;
+};
 
 export default function ForumPage() {
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [categories, setCategories] = useState<ForumCategory[]>([]);
+  const [posts, setPosts] = useState<ForumPostListItem[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredPosts = selectedCategory === 'all' 
-    ? FORUM_POSTS 
-    : FORUM_POSTS.filter(post => post.category === selectedCategory);
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      try {
+        const res = await fetch("/api/forum");
+        const data = await res.json();
+
+        if (!active) return;
+
+        if (!res.ok) {
+          setError(data.error || "Gagal memuatkan data forum.");
+          return;
+        }
+
+        setCategories(
+          Array.isArray(data.categories) ? data.categories : []
+        );
+        setPosts(Array.isArray(data.posts) ? data.posts : []);
+      } catch {
+        if (active) {
+          setError("Ralat rangkaian semasa memuatkan forum.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const filteredPosts = useMemo(() => {
+    let list = posts;
+
+    if (selectedCategory !== "all") {
+      list = list.filter((post) => post.categoryId === selectedCategory);
+    }
+
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      list = list.filter(
+        (post) =>
+          post.title.toLowerCase().includes(q) ||
+          post.excerpt.toLowerCase().includes(q) ||
+          post.author.toLowerCase().includes(q)
+      );
+    }
+
+    return list;
+  }, [posts, selectedCategory, searchTerm]);
+
+  function formatTime(input: string) {
+    const date = new Date(input);
+    if (Number.isNaN(date.getTime())) return "";
+
+    const diffMs = Date.now() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / 60000);
+    if (diffMinutes < 1) return "Baru saja";
+    if (diffMinutes < 60) return `${diffMinutes} minit lepas`;
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours} jam lepas`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays} hari lepas`;
+    return date.toLocaleDateString("ms-MY");
+  }
 
   return (
     <div className="space-y-6">
@@ -79,17 +127,31 @@ export default function ForumPage() {
             type="text" 
             placeholder="Cari topik perbincangan..." 
             className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-warisan-500 focus:border-transparent"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
-          {FORUM_CATEGORIES.map(cat => (
+          <button
+            key="all"
+            onClick={() => setSelectedCategory("all")}
+            className={cn(
+              "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+              selectedCategory === "all"
+                ? "bg-warisan-100 text-warisan-800"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            )}
+          >
+            Semua Topik
+          </button>
+          {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
               className={cn(
                 "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
-                selectedCategory === cat.id 
-                  ? "bg-warisan-100 text-warisan-800" 
+                selectedCategory === cat.id
+                  ? "bg-warisan-100 text-warisan-800"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               )}
             >
@@ -98,6 +160,13 @@ export default function ForumPage() {
           ))}
         </div>
       </div>
+
+      {loading && (
+        <p className="text-sm text-gray-500">Memuatkan forum...</p>
+      )}
+      {error && (
+        <p className="text-sm text-red-600">{error}</p>
+      )}
 
       {/* Posts List */}
       <div className="grid gap-4">
@@ -111,9 +180,13 @@ export default function ForumPage() {
                       <Pin className="w-3 h-3" /> PENGUMUMAN
                     </span>
                   )}
-                  <span className="text-xs text-gray-500">{post.time}</span>
+                  <span className="text-xs text-gray-500">
+                    {formatTime(post.createdAt)}
+                  </span>
                   <span className="text-xs text-gray-300">•</span>
-                  <span className="text-xs font-medium text-gray-700">{post.author}</span>
+                  <span className="text-xs font-medium text-gray-700">
+                    {post.author}
+                  </span>
                 </div>
                 <Link href={`/dashboard/forum/${post.id}`}>
                   <h3 className="text-lg font-bold text-gray-900 mb-2 hover:text-warisan-600 transition-colors">
