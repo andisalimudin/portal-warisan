@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getPrisma } from "@/lib/prisma";
 
 export async function GET(
-  req: Request,
-  context: { params: { id: string } }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const prisma = getPrisma();
-    const postId = context.params.id;
+    const { id: postId } = await context.params;
 
     const post = await prisma.forumPost.findUnique({
       where: { id: postId },
@@ -66,12 +66,12 @@ export async function GET(
 }
 
 export async function POST(
-  req: Request,
-  context: { params: { id: string } }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const prisma = getPrisma();
-    const postId = context.params.id;
+    const { id: postId } = await context.params;
     const body = await req.json().catch(() => ({}));
 
     const userId =
@@ -144,4 +144,3 @@ export async function POST(
     );
   }
 }
-
