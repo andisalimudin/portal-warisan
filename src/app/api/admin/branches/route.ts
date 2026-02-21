@@ -60,7 +60,7 @@ export async function GET() {
     }
 
     const result = await Promise.all(
-      branches.map(async (b) => {
+      branches.map(async (b: any) => {
         const memberCount = await prisma.user.count({
           where: { dun: b.name },
         });
