@@ -5,21 +5,14 @@ import { Users, UserCheck, Clock, Copy, Share2, QrCode, Search, Filter, MoreHori
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-// Mock Data
-const REFERRAL_STATS = {
-  total: 124,
-  active: 98,
-  pending: 26,
-  points: 1240
+type ReferralItem = {
+  id: string;
+  name: string;
+  date: string;
+  status: "APPROVED" | "PENDING" | "REJECTED" | "SUSPENDED";
+  role: string;
+  location: string | null;
 };
-
-const REFERRAL_LIST = [
-  { id: '1', name: 'Ahmad bin Ali', date: '2026-01-10', status: 'ACTIVE', role: 'AHLI_BIASA', location: 'Taman Mawar (N.52)' },
-  { id: '2', name: 'Siti Sarah', date: '2026-01-09', status: 'PENDING', role: 'AHLI_BIASA', location: 'Kg. Tinusa 2 (N.52)' },
-  { id: '3', name: 'Wong Ah Seng', date: '2026-01-08', status: 'ACTIVE', role: 'AHLI_BIASA', location: 'Taman Sibuga (N.52)' },
-  { id: '4', name: 'Muthu A/L Raju', date: '2026-01-05', status: 'ACTIVE', role: 'AHLI_BIASA', location: 'Batu 8 (N.52)' },
-  { id: '5', name: 'Dayang Ku Intan', date: '2026-01-01', status: 'REJECTED', role: 'AHLI_BIASA', location: 'Kg. Rancangan (N.52)' },
-];
 
 export default function ReferralsPage() {
   const [copied, setCopied] = useState(false);
@@ -27,6 +20,13 @@ export default function ReferralsPage() {
   const [referralLink, setReferralLink] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    pending: 0,
+    points: 0,
+  });
+  const [referrals, setReferrals] = useState<ReferralItem[]>([]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -51,15 +51,20 @@ export default function ReferralsPage() {
 
       async function load(id: string) {
         try {
-          const res = await fetch(`/api/profile?userId=${encodeURIComponent(id)}`);
-          const data = await res.json();
+          const [profileRes, referralsRes] = await Promise.all([
+            fetch(`/api/profile?userId=${encodeURIComponent(id)}`),
+            fetch(`/api/referrals?userId=${encodeURIComponent(id)}`),
+          ]);
 
-          if (!res.ok) {
-            setError(data.error || "Gagal memuatkan maklumat referral.");
+          const profileData = await profileRes.json();
+          const referralsData = await referralsRes.json();
+
+          if (!profileRes.ok) {
+            setError(profileData.error || "Gagal memuatkan maklumat referral.");
             return;
           }
 
-          const userReferralCode = String(data.user?.referralCode || "").trim();
+          const userReferralCode = String(profileData.user?.referralCode || "").trim();
 
           if (!userReferralCode) {
             setError("Kod referral tidak dijumpai. Sila hubungi admin.");
@@ -71,6 +76,31 @@ export default function ReferralsPage() {
 
           setReferralCode(userReferralCode);
           setReferralLink(link);
+
+          if (referralsRes.ok) {
+            const rStats = referralsData.stats || {};
+            const rList = Array.isArray(referralsData.referrals)
+              ? (referralsData.referrals as any[])
+              : [];
+
+            setStats({
+              total: Number(rStats.total || 0),
+              active: Number(rStats.active || 0),
+              pending: Number(rStats.pending || 0),
+              points: Number(rStats.points || 0),
+            });
+
+            const mapped: ReferralItem[] = rList.map((u) => ({
+              id: String(u.id),
+              name: String(u.name ?? ""),
+              date: u.date ? String(u.date) : "",
+              status: (u.status as ReferralItem["status"]) || "PENDING",
+              role: String(u.role ?? ""),
+              location: typeof u.location === "string" ? u.location : null,
+            }));
+
+            setReferrals(mapped);
+          }
         } catch {
           setError("Ralat rangkaian semasa memuatkan maklumat referral.");
         } finally {
@@ -113,7 +143,7 @@ export default function ReferralsPage() {
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-500">Jumlah Rujukan</p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-1">{REFERRAL_STATS.total}</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</h3>
           </div>
           <div className="w-12 h-12 bg-warisan-50 rounded-full flex items-center justify-center">
             <Users className="w-6 h-6 text-warisan-600" />
@@ -123,7 +153,7 @@ export default function ReferralsPage() {
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-500">Ahli Aktif</p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-1">{REFERRAL_STATS.active}</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.active}</h3>
           </div>
           <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center">
             <UserCheck className="w-6 h-6 text-green-600" />
@@ -133,7 +163,7 @@ export default function ReferralsPage() {
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-500">Menunggu Kelulusan</p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-1">{REFERRAL_STATS.pending}</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.pending}</h3>
           </div>
           <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center">
             <Clock className="w-6 h-6 text-orange-600" />
@@ -143,7 +173,7 @@ export default function ReferralsPage() {
         <div className="bg-warisan-900 p-6 rounded-xl shadow-sm flex items-center justify-between text-white">
           <div>
             <p className="text-sm font-medium text-warisan-200">Mata Terkumpul</p>
-            <h3 className="text-2xl font-bold mt-1">{REFERRAL_STATS.points} pts</h3>
+            <h3 className="text-2xl font-bold mt-1">{stats.points} pts</h3>
           </div>
           <div className="w-12 h-12 bg-warisan-800 rounded-full flex items-center justify-center">
             <span className="text-xl font-bold text-warisan-100">W</span>
@@ -263,7 +293,7 @@ export default function ReferralsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {REFERRAL_LIST.map((member) => (
+                {referrals.map((member) => (
                   <tr key={member.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -272,22 +302,35 @@ export default function ReferralsPage() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">{member.name}</p>
-                          <p className="text-xs text-gray-500">{member.location}</p>
+                          <p className="text-xs text-gray-500">
+                            {member.location || "Lokasi belum ditetapkan"}
+                          </p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-gray-600">{member.date}</p>
+                      <p className="text-sm text-gray-600">
+                        {member.date ? member.date.slice(0, 10) : "-"}
+                      </p>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={cn(
-                        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-                        member.status === 'ACTIVE' ? "bg-green-100 text-green-800" :
-                        member.status === 'PENDING' ? "bg-yellow-100 text-yellow-800" :
-                        "bg-red-100 text-red-800"
-                      )}>
-                        {member.status === 'ACTIVE' ? 'Aktif' :
-                         member.status === 'PENDING' ? 'Menunggu' : 'Ditolak'}
+                      <span
+                        className={cn(
+                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                          member.status === "APPROVED"
+                            ? "bg-green-100 text-green-800"
+                            : member.status === "PENDING"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        )}
+                      >
+                        {member.status === "APPROVED"
+                          ? "Aktif"
+                          : member.status === "PENDING"
+                          ? "Menunggu"
+                          : member.status === "SUSPENDED"
+                          ? "Digantung"
+                          : "Ditolak"}
                       </span>
                     </td>
                     <td className="px-6 py-4">
