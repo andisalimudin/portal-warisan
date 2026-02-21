@@ -10,7 +10,7 @@ function mapBranchStatus(status: string | null | undefined): BranchStatus {
 
 export async function GET() {
   try {
-    const prisma = getPrisma();
+    const prisma = getPrisma() as any;
 
     let branches = await prisma.branch.findMany({
       orderBy: { createdAt: "asc" },
@@ -92,7 +92,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const prisma = getPrisma();
+    const prisma = getPrisma() as any;
     const body = await req.json().catch(() => ({}));
 
     const name = typeof body.name === "string" ? body.name.trim() : "";
@@ -148,7 +148,7 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
-    const prisma = getPrisma();
+    const prisma = getPrisma() as any;
     const body = await req.json().catch(() => ({}));
 
     const id = typeof body.id === "string" ? body.id : "";
@@ -214,7 +214,7 @@ export async function PATCH(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const prisma = getPrisma();
+    const prisma = getPrisma() as any;
     const body = await req.json().catch(() => ({}));
 
     const id = typeof body.id === "string" ? body.id : "";
@@ -240,4 +240,3 @@ export async function DELETE(req: Request) {
     );
   }
 }
-
