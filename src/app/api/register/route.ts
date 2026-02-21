@@ -42,11 +42,32 @@ export async function POST(req: Request) {
 
     const passwordHash = await bcrypt.hash(parsed.password, 10);
 
-    const referralCode = parsed.referralCode?.trim();
+    const referralCodeRaw = parsed.referralCode?.trim();
     const address = parsed.address?.trim() || null;
     const state = parsed.state?.trim() || null;
     const parliament = parsed.parliament?.trim() || null;
     const dun = parsed.dun?.trim() || null;
+
+    let referrerId: string | null = null;
+
+    if (referralCodeRaw) {
+      const referrer = await prisma.user.findFirst({
+        where: {
+          referralCode: {
+            startsWith: referralCodeRaw,
+          },
+        },
+      });
+
+      if (!referrer) {
+        return NextResponse.json(
+          { error: "Kod referral tidak sah." },
+          { status: 400 }
+        );
+      }
+
+      referrerId = referrer.id;
+    }
 
     const data: Prisma.UserCreateInput = {
       fullName: parsed.fullName.trim(),
@@ -60,10 +81,10 @@ export async function POST(req: Request) {
       dun,
     };
 
-    if (referralCode) {
+    if (referrerId) {
       data.referredBy = {
         connect: {
-          referralCode,
+          id: referrerId,
         },
       };
     }
@@ -85,13 +106,6 @@ export async function POST(req: Request) {
       if (error.code === "P2002") {
         return NextResponse.json(
           { error: "No. IC atau emel telah didaftarkan." },
-          { status: 400 }
-        );
-      }
-
-      if (error.code === "P2025") {
-        return NextResponse.json(
-          { error: "Kod referral tidak sah." },
           { status: 400 }
         );
       }

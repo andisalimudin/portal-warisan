@@ -62,9 +62,10 @@ export default function DashboardPage() {
                 null
             );
 
-            const code = String(u.referralCode ?? "");
-            setReferralCode(code);
-            setMembershipId(code || String(u.id ?? ""));
+            const fullCode = String(u.referralCode ?? "");
+            const shortCode = fullCode ? fullCode.slice(0, 10) : "";
+            setReferralCode(shortCode);
+            setMembershipId(shortCode || String(u.id ?? "").slice(0, 10));
           } else {
             setStatusLabel(profileData.error || "Gagal memuatkan status keahlian");
           }

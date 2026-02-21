@@ -64,17 +64,19 @@ export default function ReferralsPage() {
             return;
           }
 
-          const userReferralCode = String(profileData.user?.referralCode || "").trim();
+          const fullReferralCode = String(profileData.user?.referralCode || "").trim();
 
-          if (!userReferralCode) {
+          if (!fullReferralCode) {
             setError("Kod referral tidak dijumpai. Sila hubungi admin.");
             return;
           }
 
-          const origin = window.location.origin;
-          const link = `${origin}/register?ref=${encodeURIComponent(userReferralCode)}`;
+          const shortReferralCode = fullReferralCode.slice(0, 10);
 
-          setReferralCode(userReferralCode);
+          const origin = window.location.origin;
+          const link = `${origin}/register?ref=${encodeURIComponent(shortReferralCode)}`;
+
+          setReferralCode(shortReferralCode);
           setReferralLink(link);
 
           if (referralsRes.ok) {
