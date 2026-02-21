@@ -306,7 +306,7 @@ export default function ForumModerationPage() {
                   <td className="px-4 py-3 align-top">
                     <div className="flex items-center justify-end gap-2">
                       <Link
-                        href={`/dashboard/forum/${post.id}`}
+                        href={`/admin/forum/${post.id}`}
                         className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
                       >
                         <Eye className="w-3 h-3" />
