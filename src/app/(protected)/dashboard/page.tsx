@@ -1,35 +1,123 @@
-import { QrCode, UserCheck, Users, Activity, Map as MapIcon } from "lucide-react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { QrCode, UserCheck, Users, Activity, Map as MapIcon, Copy } from "lucide-react";
 import Image from "next/image";
 
+function formatStatus(status: string) {
+  if (status === "APPROVED") return "Aktif";
+  if (status === "PENDING") return "Menunggu Kelulusan";
+  if (status === "SUSPENDED") return "Digantung";
+  if (status === "REJECTED") return "Ditolak";
+  return status || "-";
+}
+
 export default function DashboardPage() {
-  const branchName = "";
+  const [statusLabel, setStatusLabel] = useState("Memuatkan...");
+  const [branchName, setBranchName] = useState<string | null>(null);
+  const [referralCode, setReferralCode] = useState("");
+  const [membershipId, setMembershipId] = useState("");
+  const [referralCount, setReferralCount] = useState(0);
+  const [rewardPoints, setRewardPoints] = useState(0);
+  const [copied, setCopied] = useState(false);
+
   const hasBranch = !!branchName;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const raw = window.localStorage.getItem("warisan_user");
+
+    if (!raw) {
+      setStatusLabel("Sila log masuk semula");
+      return;
+    }
+
+    try {
+      const basicUser = JSON.parse(raw) as { id?: string };
+      const userId = basicUser.id;
+
+      if (!userId) {
+        setStatusLabel("Maklumat pengguna tidak sah");
+        return;
+      }
+
+      async function load(id: string) {
+        try {
+          const [profileRes, referralsRes] = await Promise.all([
+            fetch(`/api/profile?userId=${encodeURIComponent(id)}`),
+            fetch(`/api/referrals?userId=${encodeURIComponent(id)}`),
+          ]);
+
+          const profileData = await profileRes.json();
+          const referralsData = await referralsRes.json();
+
+          if (profileRes.ok) {
+            const u = profileData.user;
+
+            setStatusLabel(formatStatus(String(u.status ?? "")));
+            setBranchName(
+              (u.dun as string | null) ||
+                (u.parliament as string | null) ||
+                null
+            );
+
+            const code = String(u.referralCode ?? "");
+            setReferralCode(code);
+            setMembershipId(code || String(u.id ?? ""));
+          } else {
+            setStatusLabel(profileData.error || "Gagal memuatkan status keahlian");
+          }
+
+          if (referralsRes.ok) {
+            const rStats = referralsData.stats || {};
+            setReferralCount(Number(rStats.total || 0));
+            setRewardPoints(Number(rStats.points || 0));
+          }
+        } catch {
+          setStatusLabel("Ralat semasa memuatkan data");
+        }
+      }
+
+      load(userId);
+    } catch {
+      setStatusLabel("Maklumat sesi tidak sah");
+    }
+  }, []);
+
+  function handleCopyReferral() {
+    if (!referralCode) return;
+    if (typeof navigator === "undefined" || !navigator.clipboard) return;
+
+    navigator.clipboard.writeText(referralCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   return (
     <div className="space-y-6">
-      {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard 
-          title="Status Keahlian" 
-          value="Aktif" 
-          icon={<UserCheck className="w-6 h-6 text-warisan-700" />} 
+        <StatCard
+          title="Status Keahlian"
+          value={statusLabel}
+          icon={<UserCheck className="w-6 h-6 text-warisan-700" />}
           statusColor="text-warisan-700"
         />
-        <StatCard 
-          title="Jumlah Rujukan" 
-          value="12 Ahli" 
-          icon={<Users className="w-6 h-6 text-warisan-700" />} 
+        <StatCard
+          title="Jumlah Rujukan"
+          value={`${referralCount} Ahli`}
+          icon={<Users className="w-6 h-6 text-warisan-700" />}
         />
-        <StatCard 
-          title="Mata Ganjaran" 
-          value="240 Pts" 
-          icon={<Activity className="w-6 h-6 text-warisan-accent-600" />} 
+        <StatCard
+          title="Mata Ganjaran"
+          value={`${rewardPoints} Pts`}
+          icon={<Activity className="w-6 h-6 text-warisan-accent-600" />}
         />
-        <StatCard 
-          title="Cawangan" 
-          value={branchName || "Tiada"} 
-          icon={<MapIcon className="w-6 h-6 text-warisan-500" />} 
-          actionLabel={hasBranch ? "Mohon Ubah Cawangan" : "Mohon Cawangan"} 
+        <StatCard
+          title="Cawangan"
+          value={branchName || "Tiada"}
+          icon={<MapIcon className="w-6 h-6 text-warisan-500" />}
+          actionLabel={hasBranch ? "Mohon Ubah Cawangan" : "Mohon Cawangan"}
         />
       </div>
 
@@ -79,27 +167,36 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Sidebar / QR Card */}
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm border flex flex-col items-center text-center">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Kad Ahli Digital</h3>
-                <div className="bg-warisan-50 p-4 rounded-lg mb-4">
-                    <QrCode className="w-32 h-32 text-warisan-950" />
-                </div>
-                <p className="text-sm text-gray-500 mb-2">Imbas untuk kehadiran</p>
-                <div className="font-mono text-lg font-bold text-warisan-950">ID: W-2026-8831</div>
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-xl shadow-sm border flex flex-col items-center text-center">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Kad Ahli Digital</h3>
+            <div className="bg-warisan-50 p-4 rounded-lg mb-4">
+              <QrCode className="w-32 h-32 text-warisan-950" />
             </div>
+            <p className="text-sm text-gray-500 mb-2">Imbas untuk kehadiran</p>
+            <div className="font-mono text-lg font-bold text-warisan-950">
+              {membershipId ? `ID: ${membershipId}` : "ID ahli belum dijana"}
+            </div>
+          </div>
 
-            <div className="bg-gradient-to-br from-warisan-950 to-warisan-800 p-6 rounded-xl shadow-sm text-white border border-warisan-800">
-                <h3 className="font-bold mb-2">Kod Referral Anda</h3>
-                <p className="text-warisan-200 text-sm mb-4">Kongsi kod ini untuk jemput rakan.</p>
-                <div className="bg-white/10 p-3 rounded text-center font-mono text-xl font-bold tracking-widest border border-white/20">
-                    ALI8831
-                </div>
-                <button className="mt-4 w-full bg-warisan-accent-500 text-white py-2 rounded font-medium text-sm hover:bg-warisan-accent-600 transition">
-                    Salin Kod
-                </button>
+          <div className="bg-gradient-to-br from-warisan-950 to-warisan-800 p-6 rounded-xl shadow-sm text-white border border-warisan-800">
+            <h3 className="font-bold mb-2">Kod Referral Anda</h3>
+            <p className="text-warisan-200 text-sm mb-4">
+              Kongsi kod ini untuk jemput rakan.
+            </p>
+            <div className="bg-white/10 p-3 rounded text-center font-mono text-xl font-bold tracking-widest border border-white/20">
+              {referralCode || "Tiada kod referral"}
             </div>
+            <button
+              type="button"
+              onClick={handleCopyReferral}
+              disabled={!referralCode}
+              className="mt-4 w-full bg-warisan-accent-500 text-white py-2 rounded font-medium text-sm hover:bg-warisan-accent-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <Copy className="w-4 h-4" />
+              {copied ? "Kod Disalin" : "Salin Kod"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
