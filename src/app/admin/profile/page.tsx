@@ -65,9 +65,9 @@ export default function AdminProfilePage() {
         return;
       }
 
-      async function load() {
+      async function load(id: string) {
         try {
-          const res = await fetch(`/api/profile?userId=${encodeURIComponent(userId)}`);
+          const res = await fetch(`/api/profile?userId=${encodeURIComponent(id)}`);
           const data = await res.json();
 
           if (!res.ok) {
@@ -101,7 +101,7 @@ export default function AdminProfilePage() {
         }
       }
 
-      load();
+      load(userId);
     } catch {
       setError("Maklumat sesi tidak sah. Sila log masuk semula.");
       setLoading(false);
@@ -447,4 +447,3 @@ export default function AdminProfilePage() {
     </div>
   );
 }
-
