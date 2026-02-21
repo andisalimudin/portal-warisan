@@ -1,18 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Image from "next/image";
 
 export default function RegisterPage() {
-  const searchParams = useSearchParams();
-  const referralFromUrl = searchParams.get("ref") || "";
-
+  const [referralFromUrl, setReferralFromUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const url = new URL(window.location.href);
+      const ref = url.searchParams.get("ref") || "";
+      setReferralFromUrl(ref);
+    } catch {
+      setReferralFromUrl("");
+    }
+  }, []);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
