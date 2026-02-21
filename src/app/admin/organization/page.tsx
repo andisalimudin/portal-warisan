@@ -147,6 +147,15 @@ export default function OrganizationPage() {
         </button>
       </div>
 
+      {loading && (
+        <p className="mb-4 text-sm text-gray-500">
+          Memuatkan senarai cawangan dari pangkalan data...
+        </p>
+      )}
+      {loadError && (
+        <p className="mb-4 text-sm text-red-600">{loadError}</p>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard 
