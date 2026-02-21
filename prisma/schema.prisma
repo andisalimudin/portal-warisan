@@ -190,3 +190,15 @@ model ForumCommentLike {
 
   @@unique([commentId, userId])
 }
+
+model Branch {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  status      String   @default("AKTIF")
+  leaderName  String?
+  leaderPhone String?
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

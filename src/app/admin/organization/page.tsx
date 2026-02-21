@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   Plus, 
   Search, 
@@ -29,59 +29,59 @@ type Branch = {
   location: string;
 };
 
-const MOCK_BRANCHES: Branch[] = [
-  {
-    id: "1",
-    name: "Cawangan Taman Mawar",
-    code: "SIB-001",
-    leaderName: "Haji Ahmad bin Kassim",
-    leaderPhone: "013-8881234",
-    memberCount: 156,
-    status: "AKTIF",
-    establishedDate: "2020-05-12",
-    location: "Taman Mawar, Jalan Sibuga",
-  },
-  {
-    id: "2",
-    name: "Cawangan Kg. Sungai Kayu",
-    code: "SIB-002",
-    leaderName: "Encik Yusof bin Ismail",
-    leaderPhone: "019-5556789",
-    memberCount: 89,
-    status: "AKTIF",
-    establishedDate: "2021-02-20",
-    location: "Kg. Sungai Kayu, Sandakan",
-  },
-  {
-    id: "3",
-    name: "Cawangan Flat Sibuga",
-    code: "SIB-003",
-    leaderName: "Puan Fatimah binti Ali",
-    leaderPhone: "011-2223334",
-    memberCount: 210,
-    status: "AKTIF",
-    establishedDate: "2019-11-05",
-    location: "Flat Sibuga, Batu 8",
-  },
-  {
-    id: "4",
-    name: "Cawangan Kg. Bahagia",
-    code: "SIB-004",
-    leaderName: "Encik Ramli bin Mat",
-    leaderPhone: "014-7778899",
-    memberCount: 45,
-    status: "TIDAK_AKTIF",
-    establishedDate: "2022-08-15",
-    location: "Kg. Bahagia, Mile 7",
-  },
-];
-
 export default function OrganizationPage() {
-  const [branches, setBranches] = useState<Branch[]>(MOCK_BRANCHES);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<Partial<Branch>>({
+    name: "",
+    code: "",
+    status: "AKTIF",
+    leaderName: "",
+    leaderPhone: "",
+    location: "",
+  });
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadBranches() {
+      try {
+        const res = await fetch("/api/admin/branches");
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (active) {
+            setLoadError(data.error || "Gagal memuatkan senarai cawangan.");
+          }
+          return;
+        }
+
+        if (active) {
+          setBranches(Array.isArray(data.branches) ? data.branches : []);
+        }
+      } catch {
+        if (active) {
+          setLoadError("Ralat rangkaian semasa memuatkan senarai cawangan.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadBranches();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filteredBranches = branches.filter(branch => 
     branch.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -93,7 +93,12 @@ export default function OrganizationPage() {
     total: branches.length,
     active: branches.filter(b => b.status === "AKTIF").length,
     totalMembers: branches.reduce((acc, curr) => acc + curr.memberCount, 0),
-    avgMembers: Math.round(branches.reduce((acc, curr) => acc + curr.memberCount, 0) / branches.length)
+    avgMembers: branches.length
+      ? Math.round(
+          branches.reduce((acc, curr) => acc + curr.memberCount, 0) /
+            branches.length
+        )
+      : 0,
   };
 
   return (
@@ -214,6 +219,7 @@ export default function OrganizationPage() {
                       <button 
                         onClick={() => {
                           setSelectedBranch(branch);
+                          setForm(branch);
                           setIsEditModalOpen(true);
                         }}
                         className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -222,6 +228,21 @@ export default function OrganizationPage() {
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button 
+                        onClick={async () => {
+                          try {
+                            await fetch("/api/admin/branches", {
+                              method: "DELETE",
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({ id: branch.id }),
+                            });
+                            setBranches(prev =>
+                              prev.filter((b) => b.id !== branch.id)
+                            );
+                          } catch {
+                          }
+                        }}
                         className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Padam"
                       >
@@ -258,15 +279,38 @@ export default function OrganizationPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="block text-sm font-bold text-gray-700 mb-1">Nama Cawangan</label>
-                  <input type="text" className="w-full px-3 py-2 border rounded-lg" defaultValue={selectedBranch?.name} />
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border rounded-lg"
+                    value={form.name ?? ""}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, name: e.target.value }))
+                    }
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1">Kod Cawangan</label>
-                  <input type="text" className="w-full px-3 py-2 border rounded-lg" defaultValue={selectedBranch?.code} />
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border rounded-lg"
+                    value={form.code ?? ""}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, code: e.target.value }))
+                    }
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1">Status</label>
-                  <select className="w-full px-3 py-2 border rounded-lg" defaultValue={selectedBranch?.status}>
+                  <select
+                    className="w-full px-3 py-2 border rounded-lg"
+                    value={form.status ?? "AKTIF"}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        status: e.target.value as Branch["status"],
+                      }))
+                    }
+                  >
                     <option value="AKTIF">AKTIF</option>
                     <option value="TIDAK_AKTIF">TIDAK_AKTIF</option>
                   </select>
@@ -274,15 +318,35 @@ export default function OrganizationPage() {
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">Nama Ketua Cawangan</label>
-                <input type="text" className="w-full px-3 py-2 border rounded-lg" defaultValue={selectedBranch?.leaderName} />
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border rounded-lg"
+                  value={form.leaderName ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, leaderName: e.target.value }))
+                  }
+                />
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">No. Telefon Ketua</label>
-                <input type="text" className="w-full px-3 py-2 border rounded-lg" defaultValue={selectedBranch?.leaderPhone} />
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border rounded-lg"
+                  value={form.leaderPhone ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, leaderPhone: e.target.value }))
+                  }
+                />
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">Lokasi / Alamat Pusat Khidmat</label>
-                <textarea className="w-full px-3 py-2 border rounded-lg h-20" defaultValue={selectedBranch?.location}></textarea>
+                <textarea
+                  className="w-full px-3 py-2 border rounded-lg h-20"
+                  value={form.location ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, location: e.target.value }))
+                  }
+                />
               </div>
             </div>
             <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
@@ -290,15 +354,91 @@ export default function OrganizationPage() {
                 onClick={() => {
                   setIsAddModalOpen(false);
                   setIsEditModalOpen(false);
+                  setSelectedBranch(null);
                 }}
                 className="px-4 py-2 text-gray-700 font-semibold hover:bg-gray-200 rounded-lg transition-colors"
               >
                 Batal
               </button>
               <button 
-                className="px-4 py-2 bg-warisan-700 text-white font-semibold rounded-lg hover:bg-warisan-800 transition-colors shadow-sm"
+                disabled={saving}
+                onClick={async () => {
+                  if (!form.name || !form.code) {
+                    return;
+                  }
+
+                  setSaving(true);
+
+                  try {
+                    if (isAddModalOpen) {
+                      const res = await fetch("/api/admin/branches", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          name: form.name,
+                          code: form.code,
+                          status: form.status,
+                          leaderName: form.leaderName,
+                          leaderPhone: form.leaderPhone,
+                          location: form.location,
+                        }),
+                      });
+                      const data = await res.json();
+                      if (res.ok && data.branch) {
+                        setBranches((prev) => [...prev, data.branch]);
+                        setIsAddModalOpen(false);
+                        setForm({
+                          name: "",
+                          code: "",
+                          status: "AKTIF",
+                          leaderName: "",
+                          leaderPhone: "",
+                          location: "",
+                        });
+                      }
+                    } else if (isEditModalOpen && selectedBranch) {
+                      const res = await fetch("/api/admin/branches", {
+                        method: "PATCH",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          id: selectedBranch.id,
+                          name: form.name,
+                          code: form.code,
+                          status: form.status,
+                          leaderName: form.leaderName,
+                          leaderPhone: form.leaderPhone,
+                          location: form.location,
+                        }),
+                      });
+                      const data = await res.json();
+                      if (res.ok && data.branch) {
+                        setBranches((prev) =>
+                          prev.map((b) =>
+                            b.id === data.branch.id ? data.branch : b
+                          )
+                        );
+                        setIsEditModalOpen(false);
+                        setSelectedBranch(null);
+                      }
+                    }
+                  } catch {
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                className="px-4 py-2 bg-warisan-700 text-white font-semibold rounded-lg hover:bg-warisan-800 transition-colors shadow-sm disabled:opacity-50"
               >
-                {isAddModalOpen ? "Simpan Cawangan" : "Kemaskini Data"}
+                {isAddModalOpen
+                  ? saving
+                    ? "Menyimpan..."
+                    : "Simpan Cawangan"
+                  : saving
+                  ? "Menyimpan..."
+                  : "Kemaskini Data"}
               </button>
             </div>
           </div>

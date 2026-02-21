@@ -22,7 +22,10 @@ export default function DashboardPage() {
   const [copied, setCopied] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [showBranchModal, setShowBranchModal] = useState(false);
-  const [branchInput, setBranchInput] = useState("");
+  const [branchOptions, setBranchOptions] = useState<
+    { id: string; name: string; code: string }[]
+  >([]);
+  const [selectedBranchId, setSelectedBranchId] = useState("");
   const [branchSaving, setBranchSaving] = useState(false);
   const [branchError, setBranchError] = useState<string | null>(null);
 
@@ -82,6 +85,21 @@ export default function DashboardPage() {
             setReferralCount(Number(rStats.total || 0));
             setRewardPoints(Number(rStats.points || 0));
           }
+
+          try {
+            const branchesRes = await fetch("/api/admin/branches");
+            const branchesData = await branchesRes.json();
+            if (branchesRes.ok && Array.isArray(branchesData.branches)) {
+              setBranchOptions(
+                branchesData.branches.map((b: any) => ({
+                  id: String(b.id),
+                  name: String(b.name),
+                  code: String(b.code),
+                }))
+              );
+            }
+          } catch {
+          }
         } catch {
           setStatusLabel("Ralat semasa memuatkan data");
         }
@@ -128,7 +146,10 @@ export default function DashboardPage() {
           actionLabel={hasBranch ? "Mohon Ubah Cawangan" : "Mohon Cawangan"}
           onActionClick={() => {
             setBranchError(null);
-            setBranchInput(branchName || "");
+            const current = branchOptions.find(
+              (b) => b.name === (branchName || "")
+            );
+            setSelectedBranchId(current ? current.id : "");
             setShowBranchModal(true);
           }}
         />
@@ -220,16 +241,22 @@ export default function DashboardPage() {
               {hasBranch ? "Mohon Ubah Cawangan" : "Mohon Cawangan"}
             </h3>
             <p className="text-sm text-gray-600">
-              Sila isikan nama cawangan/DUN yang anda ingin daftar.
+              Sila pilih cawangan yang anda ingin daftar.
             </p>
             <div className="space-y-2">
-              <label className="text-sm text-gray-700">Nama Cawangan / DUN</label>
-              <input
-                value={branchInput}
-                onChange={(e) => setBranchInput(e.target.value)}
+              <label className="text-sm text-gray-700">Pilih Cawangan</label>
+              <select
+                value={selectedBranchId}
+                onChange={(e) => setSelectedBranchId(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-warisan-500 focus:border-warisan-500"
-                placeholder="Contoh: Cawangan Taman Ria / N.52 Sungai Sibuga"
-              />
+              >
+                <option value="">Sila pilih cawangan</option>
+                {branchOptions.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name} ({b.code})
+                  </option>
+                ))}
+              </select>
             </div>
             {branchError && (
               <p className="text-sm text-red-600">{branchError}</p>
@@ -254,9 +281,17 @@ export default function DashboardPage() {
                     return;
                   }
 
-                  const value = branchInput.trim();
-                  if (!value) {
-                    setBranchError("Sila isi nama cawangan.");
+                  if (!selectedBranchId) {
+                    setBranchError("Sila pilih cawangan.");
+                    return;
+                  }
+
+                  const selected = branchOptions.find(
+                    (b) => b.id === selectedBranchId
+                  );
+
+                  if (!selected) {
+                    setBranchError("Pilihan cawangan tidak sah.");
                     return;
                   }
 
@@ -271,7 +306,7 @@ export default function DashboardPage() {
                       },
                       body: JSON.stringify({
                         userId,
-                        dun: value,
+                        dun: selected.name,
                       }),
                     });
 
@@ -284,7 +319,7 @@ export default function DashboardPage() {
                       return;
                     }
 
-                    setBranchName(value);
+                    setBranchName(selected.name);
                     setShowBranchModal(false);
                   } catch {
                     setBranchError(
