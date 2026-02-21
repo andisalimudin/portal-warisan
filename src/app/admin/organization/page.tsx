@@ -38,6 +38,9 @@ export default function OrganizationPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [members, setMembers] = useState<
+    { id: string; name: string; phone: string }[]
+  >([]);
   const [form, setForm] = useState<Partial<Branch>>({
     name: "",
     code: "",
@@ -76,7 +79,33 @@ export default function OrganizationPage() {
       }
     }
 
+    async function loadMembers() {
+      try {
+        const res = await fetch("/api/admin/members");
+        const data = await res.json();
+        if (res.ok && Array.isArray(data.members)) {
+          const options = (data.members as any[])
+            .filter(
+              (m) =>
+                typeof m.name === "string" &&
+                m.name &&
+                typeof m.phone === "string"
+            )
+            .map((m) => ({
+              id: String(m.id),
+              name: String(m.name),
+              phone: String(m.phone),
+            }));
+          if (active) {
+            setMembers(options);
+          }
+        }
+      } catch {
+      }
+    }
+
     loadBranches();
+    loadMembers();
 
     return () => {
       active = false;
@@ -326,6 +355,33 @@ export default function OrganizationPage() {
                     setForm((f) => ({ ...f, leaderName: e.target.value }))
                   }
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">
+                  Pilih daripada senarai ahli
+                </label>
+                <select
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                  defaultValue=""
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    if (!id) return;
+                    const m = members.find((x) => x.id === id);
+                    if (!m) return;
+                    setForm((f) => ({
+                      ...f,
+                      leaderName: m.name,
+                      leaderPhone: m.phone,
+                    }));
+                  }}
+                >
+                  <option value="">-- Pilih ahli sebagai ketua --</option>
+                  {members.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.phone})
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">No. Telefon Ketua</label>
