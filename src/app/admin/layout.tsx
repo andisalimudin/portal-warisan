@@ -80,6 +80,7 @@ export default function AdminLayout({
             </div>
             <NavLink href="/admin/dashboard" icon={<LayoutDashboard />} label="Dashboard" active />
             <NavLink href="/admin/members" icon={<Users />} label="Pengurusan Ahli" />
+            <NavLink href="/admin/profile" icon={<User />} label="Profil Admin" />
             
             <div className="px-3 py-2 mt-4 text-xs font-semibold text-warisan-400 uppercase tracking-wider">
               Organisasi
@@ -176,6 +177,7 @@ export default function AdminLayout({
                   </div>
                   <NavLink href="/admin/dashboard" icon={<LayoutDashboard />} label="Dashboard" />
                   <NavLink href="/admin/members" icon={<Users />} label="Pengurusan Ahli" />
+                  <NavLink href="/admin/profile" icon={<User />} label="Profil Admin" />
                   <div className="px-3 py-2 mt-4 text-xs font-semibold text-warisan-400 uppercase tracking-wider">
                     Organisasi
                   </div>

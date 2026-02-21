@@ -34,11 +34,10 @@ export async function GET(req: Request) {
         fullName: user.fullName,
         email: user.email,
         phoneNumber: user.phoneNumber,
-        address: (user as any).address ?? null,
-        city: (user as any).city ?? null,
+        address: user.address,
         state: user.state,
-        parliament: (user as any).parliament ?? null,
-        dun: (user as any).dun ?? null,
+        parliament: user.parliament,
+        dun: user.dun,
         role: user.role,
         status: user.status,
         referralCode: user.referralCode,
@@ -55,3 +54,64 @@ export async function GET(req: Request) {
   }
 }
 
+export async function PATCH(req: Request) {
+  try {
+    const prisma = getPrisma() as PrismaClient;
+    const body = await req.json().catch(() => ({}));
+
+    const userId = typeof body.userId === "string" ? body.userId : null;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "ID pengguna tidak diberikan." },
+        { status: 400 }
+      );
+    }
+
+    const data: Record<string, unknown> = {};
+
+    if (typeof body.fullName === "string") data.fullName = body.fullName;
+    if (typeof body.phoneNumber === "string") data.phoneNumber = body.phoneNumber;
+    if (typeof body.address === "string") data.address = body.address;
+    if (typeof body.state === "string") data.state = body.state;
+    if (typeof body.parliament === "string") data.parliament = body.parliament;
+    if (typeof body.dun === "string") data.dun = body.dun;
+
+    if (!Object.keys(data).length) {
+      return NextResponse.json(
+        { error: "Tiada data untuk dikemas kini." },
+        { status: 400 }
+      );
+    }
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        icNumber: user.icNumber,
+        fullName: user.fullName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        address: user.address,
+        state: user.state,
+        parliament: user.parliament,
+        dun: user.dun,
+        role: user.role,
+        status: user.status,
+        referralCode: user.referralCode,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("PROFILE_UPDATE_ERROR", error);
+
+    return NextResponse.json(
+      { error: "Ralat semasa mengemas kini profil." },
+      { status: 500 }
+    );
+  }
+}
