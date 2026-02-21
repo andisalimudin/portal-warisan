@@ -44,7 +44,7 @@ export async function GET() {
       memberId: u.referralCode,
       phone: u.phoneNumber,
       email: u.email,
-      branch: "",
+      branch: u.dun || "",
       role: mapUserRoleToMemberRole(u.role as DbUserRole),
       status: mapUserStatusToMemberStatus(u.status as DbUserStatus),
       joinedAt: u.createdAt.toISOString().slice(0, 10),
@@ -100,6 +100,7 @@ export async function PATCH(req: Request) {
       if (typeof body.memberId === "string") data.referralCode = body.memberId;
       if (typeof body.phone === "string") data.phoneNumber = body.phone;
       if (typeof body.email === "string") data.email = body.email;
+      if (typeof body.branch === "string") data.dun = body.branch;
       if (role) data.role = mapMemberRoleToUserRole(role);
 
       if (!Object.keys(data).length) {

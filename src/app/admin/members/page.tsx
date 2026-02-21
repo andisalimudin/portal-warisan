@@ -291,6 +291,7 @@ export default function MembersPage() {
             memberId: editForm.memberId,
             phone: editForm.phone,
             email: editForm.email,
+            branch: editForm.branch,
             role: editForm.role,
           }),
         });

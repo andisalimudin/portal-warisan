@@ -20,6 +20,11 @@ export default function DashboardPage() {
   const [referralCount, setReferralCount] = useState(0);
   const [rewardPoints, setRewardPoints] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [showBranchModal, setShowBranchModal] = useState(false);
+  const [branchInput, setBranchInput] = useState("");
+  const [branchSaving, setBranchSaving] = useState(false);
+  const [branchError, setBranchError] = useState<string | null>(null);
 
   const hasBranch = !!branchName;
 
@@ -41,6 +46,8 @@ export default function DashboardPage() {
         setStatusLabel("Maklumat pengguna tidak sah");
         return;
       }
+
+      setUserId(userId);
 
       async function load(id: string) {
         try {
@@ -119,6 +126,11 @@ export default function DashboardPage() {
           value={branchName || "Tiada"}
           icon={<MapIcon className="w-6 h-6 text-warisan-500" />}
           actionLabel={hasBranch ? "Mohon Ubah Cawangan" : "Mohon Cawangan"}
+          onActionClick={() => {
+            setBranchError(null);
+            setBranchInput(branchName || "");
+            setShowBranchModal(true);
+          }}
         />
       </div>
 
@@ -200,6 +212,96 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {showBranchModal && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white w-full max-w-md rounded-xl border border-gray-200 p-6 space-y-4">
+            <h3 className="text-lg font-bold text-gray-900">
+              {hasBranch ? "Mohon Ubah Cawangan" : "Mohon Cawangan"}
+            </h3>
+            <p className="text-sm text-gray-600">
+              Sila isikan nama cawangan/DUN yang anda ingin daftar.
+            </p>
+            <div className="space-y-2">
+              <label className="text-sm text-gray-700">Nama Cawangan / DUN</label>
+              <input
+                value={branchInput}
+                onChange={(e) => setBranchInput(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-warisan-500 focus:border-warisan-500"
+                placeholder="Contoh: Cawangan Taman Ria / N.52 Sungai Sibuga"
+              />
+            </div>
+            {branchError && (
+              <p className="text-sm text-red-600">{branchError}</p>
+            )}
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (branchSaving) return;
+                  setShowBranchModal(false);
+                }}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={branchSaving}
+                onClick={async () => {
+                  if (!userId) {
+                    setBranchError("Sesi tidak sah. Sila log masuk semula.");
+                    return;
+                  }
+
+                  const value = branchInput.trim();
+                  if (!value) {
+                    setBranchError("Sila isi nama cawangan.");
+                    return;
+                  }
+
+                  setBranchSaving(true);
+                  setBranchError(null);
+
+                  try {
+                    const res = await fetch("/api/profile", {
+                      method: "PATCH",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        userId,
+                        dun: value,
+                      }),
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                      setBranchError(
+                        data.error || "Gagal mengemas kini cawangan."
+                      );
+                      return;
+                    }
+
+                    setBranchName(value);
+                    setShowBranchModal(false);
+                  } catch {
+                    setBranchError(
+                      "Ralat rangkaian semasa mengemas kini cawangan."
+                    );
+                  } finally {
+                    setBranchSaving(false);
+                  }
+                }}
+                className="px-4 py-2 rounded-lg bg-warisan-900 text-white text-sm hover:bg-warisan-800 disabled:opacity-50"
+              >
+                {branchSaving ? "Menyimpan..." : "Hantar Permohonan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -210,12 +312,14 @@ function StatCard({
   icon,
   statusColor = "text-gray-900",
   actionLabel,
+  onActionClick,
 }: {
   title: string;
   value: string;
   icon: React.ReactNode;
   statusColor?: string;
   actionLabel?: string;
+  onActionClick?: () => void;
 }) {
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border flex flex-col justify-between">
@@ -229,7 +333,11 @@ function StatCard({
         </div>
       </div>
       {actionLabel && (
-        <button className="mt-4 inline-flex items-center justify-center rounded-md border border-warisan-200 bg-warisan-50 px-3 py-1.5 text-xs font-medium text-warisan-800 hover:bg-warisan-100 transition-colors">
+        <button
+          type="button"
+          onClick={onActionClick}
+          className="mt-4 inline-flex items-center justify-center rounded-md border border-warisan-200 bg-warisan-50 px-3 py-1.5 text-xs font-medium text-warisan-800 hover:bg-warisan-100 transition-colors"
+        >
           {actionLabel}
         </button>
       )}
