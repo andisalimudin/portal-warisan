@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Users, UserCheck, Clock, Copy, Share2, QrCode, Search, Filter, MoreHorizontal, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -23,21 +23,89 @@ const REFERRAL_LIST = [
 
 export default function ReferralsPage() {
   const [copied, setCopied] = useState(false);
-  const referralCode = "WARISAN2024ALI";
-  const referralLink = `https://warisan.org.my/register?ref=${referralCode}`;
+  const [referralCode, setReferralCode] = useState<string>("");
+  const [referralLink, setReferralLink] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const raw = window.localStorage.getItem("warisan_user");
+
+    if (!raw) {
+      setError("Sesi anda telah tamat. Sila log masuk semula.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const basicUser = JSON.parse(raw) as { id?: string };
+      const userId = basicUser.id;
+
+      if (!userId) {
+        setError("Maklumat pengguna tidak sah. Sila log masuk semula.");
+        setLoading(false);
+        return;
+      }
+
+      async function load(id: string) {
+        try {
+          const res = await fetch(`/api/profile?userId=${encodeURIComponent(id)}`);
+          const data = await res.json();
+
+          if (!res.ok) {
+            setError(data.error || "Gagal memuatkan maklumat referral.");
+            return;
+          }
+
+          const userReferralCode = String(data.user?.referralCode || "").trim();
+
+          if (!userReferralCode) {
+            setError("Kod referral tidak dijumpai. Sila hubungi admin.");
+            return;
+          }
+
+          const origin = window.location.origin;
+          const link = `${origin}/register?ref=${encodeURIComponent(userReferralCode)}`;
+
+          setReferralCode(userReferralCode);
+          setReferralLink(link);
+        } catch {
+          setError("Ralat rangkaian semasa memuatkan maklumat referral.");
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      load(userId);
+    } catch {
+      setError("Maklumat sesi tidak sah. Sila log masuk semula.");
+      setLoading(false);
+    }
+  }, []);
 
   const handleCopy = () => {
+    if (!referralLink) return;
     navigator.clipboard.writeText(referralLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const qrUrl = referralLink
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(
+        referralLink
+      )}`
+    : "";
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Rangkaian Saya</h1>
-        <p className="text-gray-500">Urus dan pantau perkembangan rangkaian ahli di bawah rujukan anda.</p>
+        <p className="text-gray-500">
+          Urus dan pantau perkembangan rangkaian ahli di bawah rujukan anda.
+        </p>
       </div>
 
       {/* Stats Cards */}
@@ -87,30 +155,42 @@ export default function ReferralsPage() {
         {/* Referral Tools */}
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm h-fit">
           <h3 className="font-bold text-gray-900 mb-4">Kod Rujukan Anda</h3>
-          
+
           <div className="space-y-4">
             <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
               <p className="text-sm text-gray-500 mb-2">Kod Unik</p>
-              <p className="text-2xl font-mono font-bold text-warisan-700 tracking-wider">{referralCode}</p>
+              {loading ? (
+                <p className="text-sm text-gray-400">Memuatkan kod referral...</p>
+              ) : error ? (
+                <p className="text-sm text-red-600">{error}</p>
+              ) : (
+                <p className="text-2xl font-mono font-bold text-warisan-700 tracking-wider">
+                  {referralCode}
+                </p>
+              )}
             </div>
 
             <div className="flex gap-2">
               <input 
                 type="text" 
                 readOnly 
-                value={referralLink}
+                value={referralLink || ""}
                 className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600"
               />
               <button 
                 onClick={handleCopy}
-                className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={!referralLink}
+                className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 title="Salin Pautan"
               >
                 <Copy className={cn("w-5 h-5", copied ? "text-green-500" : "text-gray-500")} />
               </button>
             </div>
 
-            <button className="w-full flex items-center justify-center gap-2 bg-warisan-600 text-white px-4 py-3 rounded-lg hover:bg-warisan-700 transition-colors font-medium">
+            <button
+              className="w-full flex items-center justify-center gap-2 bg-warisan-600 text-white px-4 py-3 rounded-lg hover:bg-warisan-700 transition-colors font-medium disabled:opacity-50"
+              disabled={!referralLink}
+            >
               <Share2 className="w-5 h-5" />
               Kongsi Pautan
             </button>
@@ -118,13 +198,36 @@ export default function ReferralsPage() {
             <div className="border-t border-gray-100 pt-4 mt-4">
               <h4 className="text-sm font-medium text-gray-900 mb-3">Kod QR</h4>
               <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center">
-                <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
-                  <QrCode className="w-24 h-24 text-gray-400" />
-                </div>
-                <p className="text-xs text-center text-gray-500">Imbas untuk mendaftar di bawah rangkaian anda</p>
-                <button className="mt-3 flex items-center gap-1 text-sm text-warisan-600 hover:text-warisan-700 font-medium">
-                  <Download className="w-4 h-4" /> Muat Turun QR
-                </button>
+                {referralLink && qrUrl ? (
+                  <>
+                    <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
+                      <img
+                        src={qrUrl}
+                        alt="Kod QR Referral"
+                        className="w-48 h-48 rounded-lg"
+                      />
+                    </div>
+                    <p className="text-xs text-center text-gray-500">
+                      Imbas untuk mendaftar di bawah rangkaian anda
+                    </p>
+                    <a
+                      href={qrUrl}
+                      download={`warisan-referral-${referralCode || "kod"}.png`}
+                      className="mt-3 flex items-center gap-1 text-sm text-warisan-600 hover:text-warisan-700 font-medium"
+                    >
+                      <Download className="w-4 h-4" /> Muat Turun QR
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
+                      <QrCode className="w-24 h-24 text-gray-400" />
+                    </div>
+                    <p className="text-xs text-center text-gray-500">
+                      Kod QR akan dijana selepas kod referral dimuatkan.
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           </div>

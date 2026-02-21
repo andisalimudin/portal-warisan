@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Image from "next/image";
 
 export default function RegisterPage() {
+  const searchParams = useSearchParams();
+  const referralFromUrl = searchParams.get("ref") || "";
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -177,6 +181,7 @@ export default function RegisterPage() {
                   id="referral"
                   name="referral"
                   type="text"
+                  defaultValue={referralFromUrl}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-warisan-500 focus:border-warisan-500 sm:text-sm"
                 />
               </div>
