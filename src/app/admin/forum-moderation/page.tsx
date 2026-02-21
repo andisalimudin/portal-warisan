@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { MessageSquare, Heart, Pin, Trash2, Search, Loader2, AlertTriangle } from "lucide-react";
+import { MessageSquare, Heart, Pin, Trash2, Search, Loader2, AlertTriangle, Eye } from "lucide-react";
 
 type ModerationPost = {
   id: string;
@@ -246,6 +247,9 @@ export default function ForumModerationPage() {
                 <th className="px-4 py-3 font-semibold text-gray-600">
                   Tarikh
                 </th>
+                <th className="px-4 py-3 font-semibold text-gray-600 text-right">
+                  Tindakan
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -298,6 +302,53 @@ export default function ForumModerationPage() {
                   </td>
                   <td className="px-4 py-3 align-top text-xs text-gray-500">
                     {formatTime(post.createdAt)}
+                  </td>
+                  <td className="px-4 py-3 align-top">
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/dashboard/forum/${post.id}`}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      >
+                        <Eye className="w-3 h-3" />
+                        Baca
+                      </Link>
+                      {post.isPinned ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedIds([post.id]);
+                            handleAction("UNPIN");
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        >
+                          <Pin className="w-3 h-3" />
+                          Nyah Pin
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedIds([post.id]);
+                            handleAction("PIN");
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded border border-yellow-500 text-yellow-700 hover:bg-yellow-50"
+                        >
+                          <Pin className="w-3 h-3" />
+                          Pin
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedIds([post.id]);
+                          handleAction("DELETE");
+                        }}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded border border-red-500 text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Padam
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
