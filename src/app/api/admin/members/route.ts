@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
 
 type DbUserStatus = "APPROVED" | "PENDING" | "SUSPENDED" | "REJECTED";
-type DbUserRole = "AHLI_BIASA" | "ADMIN_PUSAT";
+type DbUserRole = "AHLI_BIASA" | "ADMIN_PUSAT" | "ADMIN_NEGERI" | "ADMIN_KAWASAN";
 
 function mapUserStatusToMemberStatus(status: DbUserStatus): "AKTIF" | "MENUNGGU" | "DIGANTUNG" {
   if (status === "APPROVED") return "AKTIF";
@@ -16,13 +16,17 @@ function mapMemberStatusToUserStatus(status: "AKTIF" | "MENUNGGU" | "DIGANTUNG")
   return "SUSPENDED";
 }
 
-function mapUserRoleToMemberRole(role: DbUserRole): "AHLI" | "ADMIN" {
+function mapUserRoleToMemberRole(role: DbUserRole): "AHLI" | "KETUA_CAWANGAN" | "ADMIN" | "CYBERTROOPER" {
   if (role === "ADMIN_PUSAT") return "ADMIN";
+  if (role === "ADMIN_KAWASAN") return "KETUA_CAWANGAN";
+  if (role === "ADMIN_NEGERI") return "CYBERTROOPER";
   return "AHLI";
 }
 
 function mapMemberRoleToUserRole(role: "AHLI" | "KETUA_CAWANGAN" | "ADMIN" | "CYBERTROOPER"): DbUserRole {
   if (role === "ADMIN") return "ADMIN_PUSAT";
+  if (role === "KETUA_CAWANGAN") return "ADMIN_KAWASAN";
+  if (role === "CYBERTROOPER") return "ADMIN_NEGERI";
   return "AHLI_BIASA";
 }
 
