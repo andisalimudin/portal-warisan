@@ -1,25 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
 
-function buildTicketId(index: number) {
-  const num = String(index + 1).padStart(3, "0");
-  return `#ADU-2026-${num}`;
+function formatTicketNumber(num: number) {
+  const padded = String(num).padStart(3, "0");
+  return `#ADU-2026-${padded}`;
 }
 
 async function getNextTicketId() {
   const prisma = getPrisma();
-  const last = await prisma.complaint.findFirst({
-    orderBy: { createdAt: "desc" },
+
+  const all = await prisma.complaint.findMany({
     select: { ticketId: true },
   });
 
-  if (!last?.ticketId) {
-    return buildTicketId(0);
+  if (!all.length) {
+    return formatTicketNumber(1);
   }
 
-  const match = last.ticketId.match(/(\d+)$/);
-  const lastNum = match ? parseInt(match[1], 10) : 0;
-  return buildTicketId(lastNum + 1);
+  let maxNum = 0;
+  for (const c of all) {
+    if (!c.ticketId) continue;
+    const match = c.ticketId.match(/(\d+)$/);
+    if (!match) continue;
+    const n = parseInt(match[1], 10);
+    if (!Number.isNaN(n) && n > maxNum) {
+      maxNum = n;
+    }
+  }
+
+  const next = maxNum > 0 ? maxNum + 1 : 1;
+  return formatTicketNumber(next);
 }
 
 export async function GET(req: NextRequest) {
@@ -63,7 +73,7 @@ export async function GET(req: NextRequest) {
         const created = await prisma.complaint.createMany({
           data: [
             {
-              ticketId: buildTicketId(0),
+              ticketId: formatTicketNumber(1),
               title: "Jalan Berlubang di Kg. Tinusa 2",
               category: "INFRASTRUKTUR",
               description:
@@ -80,7 +90,7 @@ export async function GET(req: NextRequest) {
               createdAt: d1,
             },
             {
-              ticketId: buildTicketId(1),
+              ticketId: formatTicketNumber(2),
               title: "Bantuan Bakul Makanan",
               category: "KEBAJIKAN",
               description:
@@ -97,7 +107,7 @@ export async function GET(req: NextRequest) {
               createdAt: d2,
             },
             {
-              ticketId: buildTicketId(2),
+              ticketId: formatTicketNumber(3),
               title: "Lampu Jalan Rosak",
               category: "INFRASTRUKTUR",
               description:
@@ -124,7 +134,7 @@ export async function GET(req: NextRequest) {
             },
           });
 
-          const main = complaints.find((c) => c.ticketId === buildTicketId(0));
+          const main = complaints.find((c) => c.ticketId === formatTicketNumber(1));
           if (main) {
             await prisma.complaint.update({
               where: { id: main.id },
