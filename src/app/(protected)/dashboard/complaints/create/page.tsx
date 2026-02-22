@@ -1,19 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Upload, MapPin, Camera, AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function CreateComplaintPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{
+    id?: string;
+    fullName?: string;
+    phoneNumber?: string;
+    dun?: string | null;
+    parliament?: string | null;
+  } | null>(null);
   const [formData, setFormData] = useState({
     category: '',
     title: '',
     description: '',
     location: '',
   });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem("warisan_user");
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as {
+        id?: string;
+        fullName?: string;
+        phoneNumber?: string;
+        dun?: string | null;
+        parliament?: string | null;
+      };
+      setCurrentUser(parsed);
+    } catch {
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -25,21 +49,32 @@ export default function CreateComplaintPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/complaints/webhook', {
+      const body: any = {
+        category: formData.category,
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+      };
+
+      if (currentUser?.id) {
+        body.reporterId = currentUser.id;
+        body.reporterName = currentUser.fullName;
+        body.reporterPhone = currentUser.phoneNumber;
+        body.area = currentUser.dun || currentUser.parliament || undefined;
+      }
+
+      const response = await fetch('/api/complaints', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
         throw new Error('Gagal menghantar aduan');
       }
 
-      // Show success message (using alert for now if no toast provider is confirmed, 
-      // but usually this project seems to use standard UI components)
-      // I'll assume a successful redirect is enough or a simple alert.
       alert("Aduan berjaya dihantar! WhatsApp AI akan memproses aduan anda sebentar lagi.");
       
       router.push('/dashboard/complaints');

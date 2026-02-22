@@ -205,3 +205,61 @@ model Branch {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+enum ComplaintStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+enum ComplaintPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Complaint {
+  id           String            @id @default(uuid())
+  ticketId     String            @unique
+  title        String
+  category     String
+  description  String
+  location     String
+  area         String?
+  status       ComplaintStatus   @default(PENDING)
+  priority     ComplaintPriority @default(MEDIUM)
+  reporterId   String?
+  reporter     User?             @relation(fields: [reporterId], references: [id])
+  reporterName String
+  reporterPhone String?
+  assignedTo   String?
+  slaDue       DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  timeline     ComplaintTimeline[]
+  messages     ComplaintMessage[]
+}
+
+model ComplaintTimeline {
+  id          String          @id @default(uuid())
+  complaintId String
+  complaint   Complaint       @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  status      ComplaintStatus
+  title       String
+  note        String?
+  actorName   String?
+  createdAt   DateTime        @default(now())
+}
+
+model ComplaintMessage {
+  id          String   @id @default(uuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  senderId    String?
+  sender      User?    @relation(fields: [senderId], references: [id])
+  senderName  String
+  senderRole  Role?
+  content     String
+  createdAt   DateTime @default(now())
+}

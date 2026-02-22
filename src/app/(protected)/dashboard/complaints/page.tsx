@@ -1,40 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ClipboardList, Plus, AlertCircle, CheckCircle, Clock, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Mock Data
-const MY_COMPLAINTS = [
-  {
-    id: '1',
-    title: 'Jalan Berlubang di Kg. Tinusa 2',
-    category: 'INFRASTRUKTUR',
-    status: 'IN_PROGRESS',
-    date: '12 Jan 2026',
-    ticketId: '#ADU-2026-001'
-  },
-  {
-    id: '2',
-    title: 'Bantuan Bakul Makanan',
-    category: 'KEBAJIKAN',
-    status: 'PENDING',
-    date: '10 Jan 2026',
-    ticketId: '#ADU-2026-002'
-  },
-  {
-    id: '3',
-    title: 'Lampu Jalan Rosak',
-    category: 'INFRASTRUKTUR',
-    status: 'RESOLVED',
-    date: '05 Jan 2026',
-    ticketId: '#ADU-2026-003'
-  }
-];
+type ComplaintListItem = {
+  id: string;
+  title: string;
+  category: string;
+  status: string;
+  date: string;
+  ticketId: string;
+};
 
 export default function ComplaintsPage() {
-  const [filter, setFilter] = useState('ALL');
+  const [filter, setFilter] = useState("ALL");
+  const [complaints, setComplaints] = useState<ComplaintListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -65,6 +49,87 @@ export default function ComplaintsPage() {
     }
   };
 
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      try {
+        if (typeof window === "undefined") return;
+
+        const raw = window.localStorage.getItem("warisan_user");
+        let reporterId: string | null = null;
+
+        if (raw) {
+          try {
+            const basic = JSON.parse(raw) as { id?: string };
+            if (basic.id) {
+              reporterId = String(basic.id);
+            }
+          } catch {
+          }
+        }
+
+        const query = reporterId
+          ? `?reporterId=${encodeURIComponent(reporterId)}`
+          : "";
+
+        const res = await fetch(`/api/complaints${query}`);
+        const data = await res.json();
+
+        if (!active) return;
+
+        if (!res.ok) {
+          setError(data.error || "Gagal memuatkan senarai aduan.");
+          return;
+        }
+
+        const items = Array.isArray(data.complaints)
+          ? data.complaints
+          : [];
+
+        setComplaints(
+          items.map((c: any) => ({
+            id: String(c.id),
+            title: String(c.title),
+            category: String(c.category),
+            status: String(c.status),
+            date: String(c.date),
+            ticketId: String(c.ticketId),
+          }))
+        );
+      } catch {
+        if (active) {
+          setError("Ralat rangkaian semasa memuatkan aduan.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const filteredComplaints = useMemo(() => {
+    if (filter === "ALL") return complaints;
+    return complaints.filter((c) => c.status === filter);
+  }, [complaints, filter]);
+
+  function formatDate(dateIso: string) {
+    const d = new Date(dateIso);
+    if (Number.isNaN(d.getTime())) return dateIso;
+    return d.toLocaleDateString("ms-MY", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+    });
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -88,60 +153,94 @@ export default function ComplaintsPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="text-sm font-medium text-gray-500 mb-1">Dalam Tindakan</div>
-          <div className="text-2xl font-bold text-blue-600">1</div>
+          <div className="text-sm font-medium text-gray-500 mb-1">
+            Dalam Tindakan
+          </div>
+          <div className="text-2xl font-bold text-blue-600">
+            {complaints.filter((c) => c.status === "IN_PROGRESS").length}
+          </div>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
           <div className="text-sm font-medium text-gray-500 mb-1">Selesai</div>
-          <div className="text-2xl font-bold text-green-600">1</div>
+          <div className="text-2xl font-bold text-green-600">
+            {complaints.filter((c) => c.status === "RESOLVED").length}
+          </div>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="text-sm font-medium text-gray-500 mb-1">Menunggu</div>
-          <div className="text-2xl font-bold text-orange-600">1</div>
+          <div className="text-sm font-medium text-gray-500 mb-1">
+            Menunggu
+          </div>
+          <div className="text-2xl font-bold text-orange-600">
+            {complaints.filter((c) => c.status === "PENDING").length}
+          </div>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex gap-2 overflow-x-auto pb-2">
-        {['ALL', 'PENDING', 'IN_PROGRESS', 'RESOLVED'].map((status) => (
+        {["ALL", "PENDING", "IN_PROGRESS", "RESOLVED"].map((status) => (
           <button
             key={status}
             onClick={() => setFilter(status)}
             className={cn(
               "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
-              filter === status 
+              filter === status
                 ? "bg-warisan-900 text-white" 
                 : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
             )}
           >
-            {status === 'ALL' ? 'Semua' : getStatusLabel(status)}
+            {status === "ALL" ? "Semua" : getStatusLabel(status)}
           </button>
         ))}
       </div>
 
       {/* Complaints List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        {loading && (
+          <div className="p-6 text-sm text-gray-500">
+            Memuatkan senarai aduan...
+          </div>
+        )}
+        {error && !loading && (
+          <div className="p-6 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+        {!loading && !error && !filteredComplaints.length && (
+          <div className="p-6 text-sm text-gray-500">
+            Tiada aduan ditemui.
+          </div>
+        )}
         <div className="divide-y divide-gray-100">
-          {MY_COMPLAINTS.map((complaint) => (
-            <Link 
-              key={complaint.id} 
+          {filteredComplaints.map((complaint) => (
+            <Link
+              key={complaint.id}
               href={`/dashboard/complaints/${complaint.id}`}
               className="block hover:bg-gray-50 transition-colors p-4 sm:p-6"
             >
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-mono text-xs text-gray-500">{complaint.ticketId}</span>
-                    <span className={cn("px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1", getStatusColor(complaint.status))}>
+                    <span className="font-mono text-xs text-gray-500">
+                      {complaint.ticketId}
+                    </span>
+                    <span
+                      className={cn(
+                        "px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1",
+                        getStatusColor(complaint.status)
+                      )}
+                    >
                       {getStatusIcon(complaint.status)}
                       {getStatusLabel(complaint.status)}
                     </span>
                   </div>
-                  <h3 className="font-semibold text-gray-900">{complaint.title}</h3>
+                  <h3 className="font-semibold text-gray-900">
+                    {complaint.title}
+                  </h3>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <span>{complaint.category}</span>
                     <span>•</span>
-                    <span>{complaint.date}</span>
+                    <span>{formatDate(complaint.date)}</span>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400" />

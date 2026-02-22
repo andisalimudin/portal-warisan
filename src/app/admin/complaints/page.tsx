@@ -1,54 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, Filter, AlertCircle, Clock, CheckCircle, ArrowUpRight, MapPin, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Mock Data
-const COMPLAINTS = [
-  {
-    id: '1',
-    ticketId: '#ADU-2026-001',
-    title: 'Jalan Berlubang di Kg. Tinusa 2',
-    reporter: 'Ali bin Abu',
-    category: 'INFRASTRUKTUR',
-    area: 'Kg. Tinusa 2 (N.52)',
-    status: 'IN_PROGRESS',
-    priority: 'HIGH',
-    date: '12 Jan 2026',
-    slaDue: '15 Jan 2026'
-  },
-  {
-    id: '2',
-    ticketId: '#ADU-2026-002',
-    title: 'Bantuan Bakul Makanan',
-    reporter: 'Siti Aminah',
-    category: 'KEBAJIKAN',
-    area: 'N.52 Sungai Sibuga',
-    status: 'PENDING',
-    priority: 'MEDIUM',
-    date: '10 Jan 2026',
-    slaDue: '17 Jan 2026'
-  },
-  {
-    id: '3',
-    ticketId: '#ADU-2026-003',
-    title: 'Lampu Jalan Rosak',
-    reporter: 'Jason Wong',
-    category: 'INFRASTRUKTUR',
-    area: 'N.52 Sungai Sibuga',
-    status: 'RESOLVED',
-    priority: 'LOW',
-    date: '05 Jan 2026',
-    slaDue: '12 Jan 2026'
-  }
-];
+type AdminComplaintItem = {
+  id: string;
+  ticketId: string;
+  title: string;
+  reporter: string;
+  category: string;
+  area: string;
+  status: string;
+  priority: string;
+  date: string;
+  slaDue: string | null;
+};
 
 export default function AdminComplaintsPage() {
-  const [filter, setFilter] = useState('ALL');
-  // Silence unused vars for now
-  console.log(filter, setFilter);
+  const [filter, setFilter] = useState("ALL");
+  const [items, setItems] = useState<AdminComplaintItem[]>([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -59,6 +34,82 @@ export default function AdminComplaintsPage() {
       default: return 'bg-gray-50 text-gray-700 border-gray-100';
     }
   };
+
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      try {
+        const res = await fetch("/api/complaints");
+        const data = await res.json();
+
+        if (!active) return;
+
+        if (!res.ok) {
+          setError(data.error || "Gagal memuatkan senarai aduan.");
+          return;
+        }
+
+        const list = Array.isArray(data.complaints) ? data.complaints : [];
+
+        setItems(
+          list.map((c: any) => ({
+            id: String(c.id),
+            ticketId: String(c.ticketId),
+            title: String(c.title),
+            reporter: String(c.reporterName || "Pengadu Portal"),
+            category: String(c.category),
+            area: String(c.area || "N.52 Sungai Sibuga"),
+            status: String(c.status),
+            priority: String(c.priority),
+            date: String(c.date),
+            slaDue: c.slaDue ? String(c.slaDue) : null,
+          }))
+        );
+      } catch {
+        if (active) {
+          setError("Ralat rangkaian semasa memuatkan senarai aduan.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const filtered = useMemo(() => {
+    let data = items;
+    if (filter !== "ALL") {
+      data = data.filter((c) => c.status === filter);
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      data = data.filter(
+        (c) =>
+          c.ticketId.toLowerCase().includes(q) ||
+          c.title.toLowerCase().includes(q) ||
+          c.reporter.toLowerCase().includes(q)
+      );
+    }
+    return data;
+  }, [items, filter, search]);
+
+  function formatDate(dateIso: string) {
+    const d = new Date(dateIso);
+    if (Number.isNaN(d.getTime())) return dateIso;
+    return d.toLocaleDateString("ms-MY", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -79,10 +130,30 @@ export default function AdminComplaintsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard title="Aduan Baru" value="12" color="text-orange-600" icon={<AlertCircle />} />
-        <StatCard title="Dalam Tindakan" value="45" color="text-blue-600" icon={<Clock />} />
-        <StatCard title="Selesai Bulan Ini" value="128" color="text-green-600" icon={<CheckCircle />} />
-        <StatCard title="SLA Terlepas" value="3" color="text-red-600" icon={<AlertCircle />} />
+        <StatCard
+          title="Aduan Baru"
+          value={String(items.filter((c) => c.status === "PENDING").length)}
+          color="text-orange-600"
+          icon={<AlertCircle />}
+        />
+        <StatCard
+          title="Dalam Tindakan"
+          value={String(items.filter((c) => c.status === "IN_PROGRESS").length)}
+          color="text-blue-600"
+          icon={<Clock />}
+        />
+        <StatCard
+          title="Selesai"
+          value={String(items.filter((c) => c.status === "RESOLVED").length)}
+          color="text-green-600"
+          icon={<CheckCircle />}
+        />
+        <StatCard
+          title="Jumlah Aduan"
+          value={String(items.length)}
+          color="text-red-600"
+          icon={<AlertCircle />}
+        />
       </div>
 
       {/* Table */}
@@ -94,10 +165,12 @@ export default function AdminComplaintsPage() {
                     type="text" 
                     placeholder="Cari ID tiket, tajuk atau pengadu..." 
                     className="pl-10 w-full rounded-lg border-gray-300 text-sm focus:ring-warisan-500 focus:border-warisan-500"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
                 />
             </div>
             <div className="text-sm text-gray-500">
-                Menunjukkan <strong>1-10</strong> dari <strong>150</strong> aduan
+                Jumlah <strong>{items.length}</strong> aduan
             </div>
         </div>
         <div className="overflow-x-auto">
@@ -114,7 +187,28 @@ export default function AdminComplaintsPage() {
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                    {COMPLAINTS.map((complaint) => (
+                    {loading && (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-4 text-sm text-gray-500">
+                          Memuatkan senarai aduan...
+                        </td>
+                      </tr>
+                    )}
+                    {error && !loading && (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-4 text-sm text-red-600">
+                          {error}
+                        </td>
+                      </tr>
+                    )}
+                    {!loading && !error && !filtered.length && (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-4 text-sm text-gray-500">
+                          Tiada aduan untuk dipaparkan.
+                        </td>
+                      </tr>
+                    )}
+                    {filtered.map((complaint) => (
                         <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-6 py-4 font-mono font-medium text-gray-900">{complaint.ticketId}</td>
                             <td className="px-6 py-4">
@@ -148,7 +242,7 @@ export default function AdminComplaintsPage() {
                                 </span>
                             </td>
                             <td className="px-6 py-4 font-mono text-xs text-gray-600">
-                                {complaint.slaDue}
+                                {complaint.slaDue ? formatDate(complaint.slaDue) : "-"}
                             </td>
                             <td className="px-6 py-4 text-right">
                                 <Link 
