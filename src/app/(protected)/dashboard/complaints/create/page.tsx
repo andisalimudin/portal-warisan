@@ -80,7 +80,16 @@ export default function CreateComplaintPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Gagal menghantar aduan');
+        let message = "Gagal menghantar aduan. Sila cuba lagi.";
+        try {
+          const data = await response.json();
+          if (data && typeof data.error === "string" && data.error.trim()) {
+            message = data.error;
+          }
+        } catch {
+        }
+        alert(message);
+        return;
       }
 
       alert("Aduan berjaya dihantar! WhatsApp AI akan memproses aduan anda sebentar lagi.");
@@ -88,7 +97,7 @@ export default function CreateComplaintPage() {
       router.push('/dashboard/complaints');
     } catch (error) {
       console.error(error);
-      alert("Ralat semasa menghantar aduan. Sila cuba lagi.");
+      alert("Ralat rangkaian semasa menghantar aduan. Sila cuba lagi.");
     } finally {
       setIsLoading(false);
     }

@@ -280,8 +280,12 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("COMPLAINT_CREATE_ERROR", error);
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : "Ralat semasa menghantar aduan.";
     return NextResponse.json(
-      { error: "Ralat semasa menghantar aduan." },
+      { error: message },
       { status: 500 }
     );
   }
