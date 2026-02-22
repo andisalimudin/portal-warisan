@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Upload, MapPin, Camera, AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -21,6 +21,10 @@ export default function CreateComplaintPage() {
     description: '',
     location: '',
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -56,6 +60,10 @@ export default function CreateComplaintPage() {
         location: formData.location,
       };
 
+      if (imageUrl) {
+        body.imageUrl = imageUrl;
+      }
+
       if (currentUser?.id) {
         body.reporterId = currentUser.id;
         body.reporterName = currentUser.fullName;
@@ -83,6 +91,53 @@ export default function CreateComplaintPage() {
       alert("Ralat semasa menghantar aduan. Sila cuba lagi.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleClickUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    setImageUrl(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/uploads/complaints", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Gagal memuat naik gambar.");
+      }
+
+      setImageUrl(data.url);
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          setImagePreview(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error(err);
+      alert("Ralat semasa memuat naik gambar. Sila cuba lagi.");
+      setImagePreview(null);
+      setImageUrl(null);
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -179,13 +234,52 @@ export default function CreateComplaintPage() {
         {/* Image Upload */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700">Bukti Bergambar (Pilihan)</label>
-          <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:bg-gray-50 transition-colors cursor-pointer">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Camera className="w-6 h-6 text-gray-500" />
-            </div>
-            <p className="text-sm font-medium text-gray-900">Klik untuk muat naik gambar</p>
-            <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageChange}
+          />
+          <div
+            className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer"
+            onClick={handleClickUpload}
+          >
+            {imagePreview ? (
+              <div className="flex flex-col items-center gap-3">
+                <img
+                  src={imagePreview}
+                  alt="Pratonton aduan"
+                  className="max-h-40 rounded-lg object-contain"
+                />
+                <p className="text-xs text-gray-500">
+                  Klik untuk tukar gambar. PNG, JPG sehingga 5MB.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Camera className="w-6 h-6 text-gray-500" />
+                </div>
+                <p className="text-sm font-medium text-gray-900">
+                  Klik untuk muat naik gambar
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  PNG, JPG sehingga 5MB
+                </p>
+              </>
+            )}
           </div>
+          {uploadingImage && (
+            <p className="text-xs text-gray-500">
+              Memuat naik gambar...
+            </p>
+          )}
+          {imageUrl && !uploadingImage && (
+            <p className="text-xs text-green-600">
+              Gambar berjaya dimuat naik.
+            </p>
+          )}
         </div>
 
         {/* Submit Button */}

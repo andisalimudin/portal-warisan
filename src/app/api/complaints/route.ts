@@ -204,6 +204,10 @@ export async function POST(req: NextRequest) {
       typeof body.area === "string" && body.area.trim()
         ? (body.area as string).trim()
         : null;
+    const imageUrl =
+      typeof body.imageUrl === "string" && body.imageUrl.trim()
+        ? (body.imageUrl as string).trim()
+        : null;
 
     if (!category || !title || !description || !location) {
       return NextResponse.json(
@@ -248,6 +252,7 @@ export async function POST(req: NextRequest) {
         reporterId: finalReporterId || undefined,
         reporterName: finalReporterName,
         reporterPhone: finalReporterPhone || null,
+        imageUrl: imageUrl || null,
         assignedTo: "Pusat Khidmat N.52",
         slaDue: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 7),
       },
