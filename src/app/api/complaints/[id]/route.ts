@@ -38,6 +38,7 @@ export async function GET(
       description: complaint.description,
       location: complaint.location,
       area: complaint.area || "",
+      imageUrl: complaint.imageUrl || null,
       reporter: {
         id: complaint.reporterId,
         name: complaint.reporterName,

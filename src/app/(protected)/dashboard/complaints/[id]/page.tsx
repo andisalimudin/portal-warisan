@@ -28,6 +28,7 @@ type ComplaintDetail = {
   createdAt: string;
   slaDue: string | null;
   assignedTo: string;
+  imageUrl?: string | null;
   reporter: {
     id: string | null;
     name: string;
@@ -280,12 +281,24 @@ export default function ComplaintDetailPage() {
                 </>
               )}
 
-              {/* Mock Image */}
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Lampiran</h3>
-                <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center border-2 border-dashed border-gray-300">
-                  <p className="text-gray-400 text-sm">Gambar Lampiran (Mock)</p>
-                </div>
+                {complaint?.imageUrl ? (
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-3 flex flex-col items-start gap-3">
+                    <img
+                      src={complaint.imageUrl}
+                      alt="Lampiran aduan"
+                      className="max-h-64 rounded-lg object-contain bg-black/5 w-full"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Gambar lampiran yang dihantar bersama aduan.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center border-2 border-dashed border-gray-300">
+                    <p className="text-gray-400 text-sm">Tiada gambar lampiran.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

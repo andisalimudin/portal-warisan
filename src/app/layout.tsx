@@ -15,6 +15,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Portal ADUN N.52 Sungai Sibuga",
   description: "Portal rasmi untuk penduduk dan ahli kawasan N.52 Sungai Sibuga.",
+  manifest: "/manifest.json",
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({
