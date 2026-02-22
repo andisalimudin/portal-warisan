@@ -6,6 +6,22 @@ function buildTicketId(index: number) {
   return `#ADU-2026-${num}`;
 }
 
+async function getNextTicketId() {
+  const prisma = getPrisma();
+  const last = await prisma.complaint.findFirst({
+    orderBy: { createdAt: "desc" },
+    select: { ticketId: true },
+  });
+
+  if (!last?.ticketId) {
+    return buildTicketId(0);
+  }
+
+  const match = last.ticketId.match(/(\d+)$/);
+  const lastNum = match ? parseInt(match[1], 10) : 0;
+  return buildTicketId(lastNum);
+}
+
 export async function GET(req: NextRequest) {
   try {
     const prisma = getPrisma();
@@ -47,7 +63,7 @@ export async function GET(req: NextRequest) {
         const created = await prisma.complaint.createMany({
           data: [
             {
-              ticketId: buildTicketId(1),
+              ticketId: buildTicketId(0),
               title: "Jalan Berlubang di Kg. Tinusa 2",
               category: "INFRASTRUKTUR",
               description:
@@ -64,7 +80,7 @@ export async function GET(req: NextRequest) {
               createdAt: d1,
             },
             {
-              ticketId: buildTicketId(2),
+              ticketId: buildTicketId(1),
               title: "Bantuan Bakul Makanan",
               category: "KEBAJIKAN",
               description:
@@ -81,7 +97,7 @@ export async function GET(req: NextRequest) {
               createdAt: d2,
             },
             {
-              ticketId: buildTicketId(3),
+              ticketId: buildTicketId(2),
               title: "Lampu Jalan Rosak",
               category: "INFRASTRUKTUR",
               description:
@@ -108,7 +124,7 @@ export async function GET(req: NextRequest) {
             },
           });
 
-          const main = complaints.find((c) => c.ticketId === buildTicketId(1));
+          const main = complaints.find((c) => c.ticketId === buildTicketId(0));
           if (main) {
             await prisma.complaint.update({
               where: { id: main.id },
@@ -236,8 +252,7 @@ export async function POST(req: NextRequest) {
       finalReporterName = "Pengadu Portal";
     }
 
-    const count = await prisma.complaint.count();
-    const ticketId = buildTicketId(count);
+    const ticketId = await getNextTicketId();
 
     const complaint = await prisma.complaint.create({
       data: {
