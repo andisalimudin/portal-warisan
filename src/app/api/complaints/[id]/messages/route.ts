@@ -11,17 +11,20 @@ export async function GET(
 
     const prisma = getPrisma();
 
-    const messages = await prisma.complaintMessage.findMany({
-      where: { complaintId: id },
+    const timelineMessages = await prisma.complaintTimeline.findMany({
+      where: {
+        complaintId: id,
+        title: "MSG",
+      },
       orderBy: { createdAt: "asc" },
     });
 
-    const result = messages.map((m) => ({
+    const result = timelineMessages.map((m) => ({
       id: m.id,
-      senderId: m.senderId || null,
-      senderName: m.senderName,
-      senderRole: m.senderRole || null,
-      content: m.content,
+      senderId: null as string | null,
+      senderName: m.actorName || "Pengguna Portal",
+      senderRole: null as string | null,
+      content: m.note || "",
       createdAt: m.createdAt.toISOString(),
     }));
 
@@ -71,7 +74,7 @@ export async function POST(
 
     const complaint = await prisma.complaint.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, status: true },
     });
 
     if (!complaint) {
@@ -99,24 +102,24 @@ export async function POST(
       finalSenderName = "Pengguna Portal";
     }
 
-    const message = await prisma.complaintMessage.create({
+    const timelineEntry = await prisma.complaintTimeline.create({
       data: {
         complaintId: complaint.id,
-        senderId: finalSenderId || undefined,
-        senderName: finalSenderName,
-        senderRole: finalSenderRole || null,
-        content,
+        status: complaint.status,
+        title: "MSG",
+        note: content,
+        actorName: finalSenderName,
       },
     });
 
     return NextResponse.json({
       message: {
-        id: message.id,
-        senderId: message.senderId,
-        senderName: message.senderName,
-        senderRole: message.senderRole,
-        content: message.content,
-        createdAt: message.createdAt.toISOString(),
+        id: timelineEntry.id,
+        senderId: finalSenderId,
+        senderName: finalSenderName,
+        senderRole: finalSenderRole || null,
+        content,
+        createdAt: timelineEntry.createdAt.toISOString(),
       },
     });
   } catch (error) {
@@ -127,4 +130,3 @@ export async function POST(
     );
   }
 }
-
