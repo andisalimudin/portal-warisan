@@ -57,6 +57,7 @@ model User {
   forumComments ForumComment[]
   forumLikes    ForumLike[]
   forumCommentLikes ForumCommentLike[]
+  complaintsReported Complaint[] @relation("ComplaintsReported")
 }
 
 model AuditLog {
@@ -230,7 +231,7 @@ model Complaint {
   status       ComplaintStatus   @default(PENDING)
   priority     ComplaintPriority @default(MEDIUM)
   reporterId   String?
-  reporter     User?             @relation(fields: [reporterId], references: [id])
+  reporter     User?             @relation("ComplaintsReported", fields: [reporterId], references: [id])
   reporterName String
   reporterPhone String?
   assignedTo   String?
@@ -238,7 +239,6 @@ model Complaint {
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   timeline     ComplaintTimeline[]
-  messages     ComplaintMessage[]
 }
 
 model ComplaintTimeline {
@@ -250,16 +250,4 @@ model ComplaintTimeline {
   note        String?
   actorName   String?
   createdAt   DateTime        @default(now())
-}
-
-model ComplaintMessage {
-  id          String   @id @default(uuid())
-  complaintId String
-  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
-  senderId    String?
-  sender      User?    @relation(fields: [senderId], references: [id])
-  senderName  String
-  senderRole  Role?
-  content     String
-  createdAt   DateTime @default(now())
 }
