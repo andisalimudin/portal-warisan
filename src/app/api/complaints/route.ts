@@ -19,7 +19,7 @@ async function getNextTicketId() {
 
   const match = last.ticketId.match(/(\d+)$/);
   const lastNum = match ? parseInt(match[1], 10) : 0;
-  return buildTicketId(lastNum);
+  return buildTicketId(lastNum + 1);
 }
 
 export async function GET(req: NextRequest) {
