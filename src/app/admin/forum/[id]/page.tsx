@@ -10,6 +10,8 @@ import {
   Share2,
   MoreHorizontal,
   User,
+  Trash2,
+  Send,
 } from "lucide-react";
 
 type AdminForumComment = {
@@ -38,9 +40,29 @@ export default function AdminForumDetailPage() {
   const [comments, setComments] = useState<AdminForumComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [commentInput, setCommentInput] = useState("");
+  const [commentSaving, setCommentSaving] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     let active = true;
+
+    if (typeof window !== "undefined") {
+      const raw = window.localStorage.getItem("warisan_user");
+      if (raw) {
+        try {
+          const basic = JSON.parse(raw) as { id?: string };
+          if (basic.id) {
+            setUserId(String(basic.id));
+          }
+        } catch {
+        }
+      }
+    }
 
     async function load() {
       try {
@@ -96,6 +118,82 @@ export default function AdminForumDetailPage() {
     const diffDays = Math.floor(diffHours / 24);
     if (diffDays < 7) return `${diffDays} hari lepas`;
     return date.toLocaleDateString("ms-MY");
+  }
+
+  async function handleCommentSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!post) return;
+    if (!userId) {
+      setCommentError("Maklumat admin tidak sah. Sila log masuk semula.");
+      return;
+    }
+    if (!commentInput.trim()) return;
+
+    setCommentSaving(true);
+    setCommentError(null);
+
+    try {
+      const res = await fetch(`/api/forum/${encodeURIComponent(post.id)}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          content: commentInput.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setCommentError(data.error || "Ralat semasa menghantar komen.");
+        return;
+      }
+
+      const created = data.comment as AdminForumComment;
+      setComments((prev) => [...prev, created]);
+      setCommentInput("");
+    } catch {
+      setCommentError("Ralat rangkaian semasa menghantar komen.");
+    } finally {
+      setCommentSaving(false);
+    }
+  }
+
+  async function handleDeleteComment(id: string) {
+    if (!id) return;
+
+    const confirmed =
+      typeof window !== "undefined"
+        ? window.confirm("Adakah anda pasti mahu memadam komen ini?")
+        : true;
+
+    if (!confirmed) return;
+
+    setDeletingCommentId(id);
+
+    try {
+      const res = await fetch(
+        `/api/admin/forum/comment/${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setCommentError(data.error || "Ralat semasa memadam komen.");
+        return;
+      }
+
+      setComments((prev) => prev.filter((c) => c.id !== id));
+    } catch {
+      setCommentError("Ralat rangkaian semasa memadam komen.");
+    } finally {
+      setDeletingCommentId(null);
+    }
   }
 
   return (
@@ -180,6 +278,39 @@ export default function AdminForumDetailPage() {
               </span>
             </h3>
 
+            <form
+              onSubmit={handleCommentSubmit}
+              className="flex gap-4 mb-8 border-b border-gray-200 pb-6"
+            >
+              <div className="w-10 h-10 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center">
+                <User className="w-6 h-6 text-gray-500" />
+              </div>
+              <div className="flex-1">
+                <textarea
+                  value={commentInput}
+                  onChange={(e) => setCommentInput(e.target.value)}
+                  placeholder="Tulis komen rasmi sebagai admin..."
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-warisan-500 focus:border-transparent min-h-[100px] resize-none text-sm"
+                />
+                {commentError && (
+                  <p className="mt-1 text-xs text-red-600">{commentError}</p>
+                )}
+                <div className="flex justify-end mt-2">
+                  <button
+                    type="submit"
+                    disabled={!commentInput.trim() || commentSaving}
+                    className="px-4 py-2 bg-warisan-600 text-white rounded-lg font-medium hover:bg-warisan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 text-sm"
+                  >
+                    {commentSaving && (
+                      <Send className="w-4 h-4 animate-spin" />
+                    )}
+                    {!commentSaving && <Send className="w-4 h-4" />}
+                    Hantar Komen
+                  </button>
+                </div>
+              </div>
+            </form>
+
             <div className="space-y-6">
               {comments.map((comment) => (
                 <div key={comment.id} className="flex gap-4 group">
@@ -197,9 +328,20 @@ export default function AdminForumDetailPage() {
                             {comment.authorRole.replace("_", " ")}
                           </span>
                         </div>
-                        <span className="text-xs text-gray-400">
-                          {formatTime(comment.createdAt)}
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-gray-400">
+                            {formatTime(comment.createdAt)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteComment(comment.id)}
+                            disabled={deletingCommentId === comment.id}
+                            className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Padam
+                          </button>
+                        </div>
                       </div>
                       <p className="text-gray-800 text-sm leading-relaxed">
                         {comment.content}
@@ -220,4 +362,3 @@ export default function AdminForumDetailPage() {
     </div>
   );
 }
-
