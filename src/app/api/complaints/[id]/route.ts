@@ -105,20 +105,25 @@ export async function PATCH(
 
     const updated = await prisma.complaint.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        ...(status || note
+          ? {
+              timeline: {
+                create: {
+                  status: (status as any) || undefined,
+                  title:
+                    status === "RESOLVED"
+                      ? "Aduan Selesai"
+                      : "Kemaskini Status",
+                  note: note || "",
+                  actorName,
+                },
+              },
+            }
+          : {}),
+      },
     });
-
-    if (status || note) {
-      await prisma.complaintTimeline.create({
-        data: {
-          complaintId: updated.id,
-          status: (status as any) || updated.status,
-          title: status === "RESOLVED" ? "Aduan Selesai" : "Kemaskini Status",
-          note: note || "",
-          actorName,
-        },
-      });
-    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
@@ -129,4 +134,3 @@ export async function PATCH(
     );
   }
 }
-

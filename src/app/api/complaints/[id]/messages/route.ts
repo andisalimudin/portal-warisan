@@ -11,15 +11,24 @@ export async function GET(
 
     const prisma = getPrisma();
 
-    const timelineMessages = await prisma.complaintTimeline.findMany({
-      where: {
-        complaintId: id,
-        title: "MSG",
+    const complaint = await prisma.complaint.findUnique({
+      where: { id },
+      include: {
+        timeline: {
+          where: { title: "MSG" },
+          orderBy: { createdAt: "asc" },
+        },
       },
-      orderBy: { createdAt: "asc" },
     });
 
-    const result = timelineMessages.map((m) => ({
+    if (!complaint) {
+      return NextResponse.json(
+        { error: "Aduan tidak dijumpai." },
+        { status: 404 }
+      );
+    }
+
+    const result = complaint.timeline.map((m) => ({
       id: m.id,
       senderId: null as string | null,
       senderName: m.actorName || "Pengguna Portal",
@@ -102,24 +111,37 @@ export async function POST(
       finalSenderName = "Pengguna Portal";
     }
 
-    const timelineEntry = await prisma.complaintTimeline.create({
+    const updatedWithMessage = await prisma.complaint.update({
+      where: { id: complaint.id },
       data: {
-        complaintId: complaint.id,
-        status: complaint.status,
-        title: "MSG",
-        note: content,
-        actorName: finalSenderName,
+        timeline: {
+          create: {
+            status: complaint.status,
+            title: "MSG",
+            note: content,
+            actorName: finalSenderName,
+          },
+        },
+      },
+      include: {
+        timeline: {
+          where: { title: "MSG" },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
       },
     });
 
+    const latest = updatedWithMessage.timeline[0];
+
     return NextResponse.json({
       message: {
-        id: timelineEntry.id,
+        id: latest.id,
         senderId: finalSenderId,
         senderName: finalSenderName,
         senderRole: finalSenderRole || null,
         content,
-        createdAt: timelineEntry.createdAt.toISOString(),
+        createdAt: latest.createdAt.toISOString(),
       },
     });
   } catch (error) {

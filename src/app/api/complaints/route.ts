@@ -110,25 +110,28 @@ export async function GET(req: NextRequest) {
 
           const main = complaints.find((c) => c.ticketId === buildTicketId(1));
           if (main) {
-            await prisma.complaintTimeline.createMany({
-              data: [
-                {
-                  complaintId: main.id,
-                  status: "PENDING",
-                  title: "Aduan Diterima",
-                  note: "Aduan telah didaftarkan ke dalam sistem.",
-                  actorName: "Sistem",
-                  createdAt: d1,
+            await prisma.complaint.update({
+              where: { id: main.id },
+              data: {
+                timeline: {
+                  create: [
+                    {
+                      status: "PENDING",
+                      title: "Aduan Diterima",
+                      note: "Aduan telah didaftarkan ke dalam sistem.",
+                      actorName: "Sistem",
+                      createdAt: d1,
+                    },
+                    {
+                      status: "IN_PROGRESS",
+                      title: "Dalam Tindakan",
+                      note: "Tugasan telah diserahkan kepada Ketua Cawangan Tinusa 2 untuk siasatan awal.",
+                      actorName: "Admin Pusat",
+                      createdAt: new Date(d1.getTime() + 4 * 60 * 60 * 1000),
+                    },
+                  ],
                 },
-                {
-                  complaintId: main.id,
-                  status: "IN_PROGRESS",
-                  title: "Dalam Tindakan",
-                  note: "Tugasan telah diserahkan kepada Ketua Cawangan Tinusa 2 untuk siasatan awal.",
-                  actorName: "Admin Pusat",
-                  createdAt: new Date(d1.getTime() + 4 * 60 * 60 * 1000),
-                },
-              ],
+              },
             });
           }
         }
@@ -250,13 +253,17 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await prisma.complaintTimeline.create({
+    await prisma.complaint.update({
+      where: { id: complaint.id },
       data: {
-        complaintId: complaint.id,
-        status: "PENDING",
-        title: "Aduan Diterima",
-        note: "Aduan telah didaftarkan ke dalam sistem.",
-        actorName: "Sistem",
+        timeline: {
+          create: {
+            status: "PENDING",
+            title: "Aduan Diterima",
+            note: "Aduan telah didaftarkan ke dalam sistem.",
+            actorName: "Sistem",
+          },
+        },
       },
     });
 
@@ -274,4 +281,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
