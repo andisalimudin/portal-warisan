@@ -192,13 +192,16 @@ model ForumCommentLike {
 }
 
 model Branch {
-  id          String   @id @default(uuid())
-  name        String
-  code        String   @unique
-  status      String   @default("AKTIF")
-  leaderName  String?
-  leaderPhone String?
-  location    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid())
+  name         String
+  code         String   @unique
+  status       String   @default("AKTIF")
+  leaderName   String?
+  leaderPhone  String?
+  location     String?
+  description  String?
+  activities   String?
+  calendar     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

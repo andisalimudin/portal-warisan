@@ -73,6 +73,9 @@ export async function GET() {
           leaderName: b.leaderName || "",
           leaderPhone: b.leaderPhone || "",
           location: b.location || "",
+          description: b.description || "",
+          activities: b.activities || "",
+          calendar: b.calendar || "",
           memberCount,
           establishedDate: b.createdAt.toISOString().slice(0, 10),
         };
@@ -104,6 +107,12 @@ export async function POST(req: Request) {
       typeof body.leaderPhone === "string" ? body.leaderPhone.trim() : "";
     const location =
       typeof body.location === "string" ? body.location.trim() : "";
+    const description =
+      typeof body.description === "string" ? body.description.trim() : "";
+    const activities =
+      typeof body.activities === "string" ? body.activities.trim() : "";
+    const calendar =
+      typeof body.calendar === "string" ? body.calendar.trim() : "";
 
     if (!name || !code) {
       return NextResponse.json(
@@ -120,6 +129,9 @@ export async function POST(req: Request) {
         leaderName: leaderName || null,
         leaderPhone: leaderPhone || null,
         location: location || null,
+        description: description || null,
+        activities: activities || null,
+        calendar: calendar || null,
       },
     });
 
@@ -132,6 +144,9 @@ export async function POST(req: Request) {
         leaderName: created.leaderName || "",
         leaderPhone: created.leaderPhone || "",
         location: created.location || "",
+        description: created.description || "",
+        activities: created.activities || "",
+        calendar: created.calendar || "",
         memberCount: 0,
         establishedDate: created.createdAt.toISOString().slice(0, 10),
       },
@@ -172,6 +187,12 @@ export async function PATCH(req: Request) {
       data.leaderPhone = body.leaderPhone.trim();
     if (typeof body.location === "string")
       data.location = body.location.trim();
+    if (typeof body.description === "string")
+      data.description = body.description.trim();
+    if (typeof body.activities === "string")
+      data.activities = body.activities.trim();
+    if (typeof body.calendar === "string")
+      data.calendar = body.calendar.trim();
 
     if (!Object.keys(data).length) {
       return NextResponse.json(
@@ -198,6 +219,9 @@ export async function PATCH(req: Request) {
         leaderName: updated.leaderName || "",
         leaderPhone: updated.leaderPhone || "",
         location: updated.location || "",
+        description: updated.description || "",
+        activities: updated.activities || "",
+        calendar: updated.calendar || "",
         memberCount,
         establishedDate: updated.createdAt.toISOString().slice(0, 10),
       },

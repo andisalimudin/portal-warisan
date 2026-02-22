@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { 
   Plus, 
@@ -252,8 +253,15 @@ export default function OrganizationPage() {
                       {branch.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                 <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
+                      <Link
+                        href={`/admin/branches/${branch.id}`}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+                      >
+                        Laman
+                        <ChevronRight className="w-3 h-3" />
+                      </Link>
                       <button 
                         onClick={() => {
                           setSelectedBranch(branch);
