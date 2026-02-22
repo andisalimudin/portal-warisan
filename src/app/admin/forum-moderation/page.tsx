@@ -16,6 +16,12 @@ type ModerationPost = {
   isPinned: boolean;
 };
 
+type ForumCategoryOption = {
+  id: string;
+  name: string;
+  description: string;
+};
+
 export default function ForumModerationPage() {
   const [posts, setPosts] = useState<ModerationPost[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -23,9 +29,30 @@ export default function ForumModerationPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingAction, setSavingAction] = useState<"" | "DELETE" | "PIN" | "UNPIN">("");
+  const [categories, setCategories] = useState<ForumCategoryOption[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createTitle, setCreateTitle] = useState("");
+  const [createCategoryId, setCreateCategoryId] = useState("");
+  const [createContent, setCreateContent] = useState("");
+  const [createSaving, setCreateSaving] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
+
+    if (typeof window !== "undefined") {
+      const raw = window.localStorage.getItem("warisan_user");
+      if (raw) {
+        try {
+          const basic = JSON.parse(raw) as { id?: string };
+          if (basic.id) {
+            setUserId(String(basic.id));
+          }
+        } catch {
+        }
+      }
+    }
 
     async function load() {
       try {
@@ -39,8 +66,9 @@ export default function ForumModerationPage() {
           return;
         }
 
-        setPosts(
-          Array.isArray(data.posts) ? data.posts : []
+        setPosts(Array.isArray(data.posts) ? data.posts : []);
+        setCategories(
+          Array.isArray(data.categories) ? data.categories : []
         );
       } catch {
         if (active) {
@@ -138,6 +166,54 @@ export default function ForumModerationPage() {
     }
   }
 
+  async function handleCreateSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!userId) {
+      setCreateError("Maklumat admin tidak sah. Sila log masuk semula.");
+      return;
+    }
+    if (!createTitle.trim() || !createContent.trim() || !createCategoryId) {
+      setCreateError("Sila isi semua maklumat topik.");
+      return;
+    }
+
+    setCreateSaving(true);
+    setCreateError(null);
+
+    try {
+      const res = await fetch("/api/forum", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          categoryId: createCategoryId,
+          title: createTitle.trim(),
+          content: createContent.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setCreateError(data.error || "Ralat semasa mencipta topik baru.");
+        return;
+      }
+
+      const created = data.post as ModerationPost;
+      setPosts((prev) => [created, ...prev]);
+      setIsCreateOpen(false);
+      setCreateTitle("");
+      setCreateCategoryId("");
+      setCreateContent("");
+    } catch {
+      setCreateError("Ralat rangkaian semasa mencipta topik.");
+    } finally {
+      setCreateSaving(false);
+    }
+  }
+
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -147,6 +223,20 @@ export default function ForumModerationPage() {
             Pantau dan uruskan topik perbincangan yang dihantar oleh ahli.
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            setCreateError(null);
+            setCreateTitle("");
+            setCreateCategoryId("");
+            setCreateContent("");
+            setIsCreateOpen(true);
+          }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-warisan-700 text-white text-sm font-semibold hover:bg-warisan-800 shadow-sm"
+        >
+          <MessageSquare className="w-4 h-4" />
+          Topik Baru
+        </button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border p-4 flex flex-col md:flex-row gap-4 items-center">
@@ -367,6 +457,87 @@ export default function ForumModerationPage() {
           </table>
         </div>
       </div>
+
+      {isCreateOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white w-full max-w-lg rounded-xl border border-gray-200 p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900">
+                Cipta Topik Baru
+              </h2>
+              <button
+                type="button"
+                onClick={() => setIsCreateOpen(false)}
+                className="text-gray-400 hover:text-gray-600 text-sm font-semibold"
+              >
+                Tutup
+              </button>
+            </div>
+            {createError && (
+              <p className="text-sm text-red-600">{createError}</p>
+            )}
+            <form onSubmit={handleCreateSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Kategori
+                </label>
+                <select
+                  value={createCategoryId}
+                  onChange={(e) => setCreateCategoryId(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-warisan-500 focus:border-warisan-500"
+                >
+                  <option value="">Pilih kategori</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Tajuk Topik
+                </label>
+                <input
+                  type="text"
+                  value={createTitle}
+                  onChange={(e) => setCreateTitle(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-warisan-500 focus:border-warisan-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Isi Topik
+                </label>
+                <textarea
+                  value={createContent}
+                  onChange={(e) => setCreateContent(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-warisan-500 focus:border-warisan-500 min-h-[120px] resize-vertical"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateOpen(false)}
+                  className="px-4 py-2 text-sm font-semibold text-gray-700 rounded-lg hover:bg-gray-100"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={createSaving}
+                  className="px-4 py-2 text-sm font-semibold rounded-lg bg-warisan-700 text-white hover:bg-warisan-800 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {createSaving && (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  )}
+                  {createSaving ? "Menyimpan..." : "Simpan Topik"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
