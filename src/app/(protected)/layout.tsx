@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, User, Users, MessageSquare, LogOut, Settings, Target, DollarSign, ClipboardList, Menu, X } from "lucide-react";
+import { LayoutDashboard, User, Users, MessageSquare, LogOut, Settings, Target, DollarSign, ClipboardList, Menu, X, MapPin } from "lucide-react";
 import Image from "next/image";
 
 function formatRole(role: string) {
@@ -86,6 +86,7 @@ export default function ProtectedLayout({
             <NavLink href="/dashboard/referrals" icon={<Users />} label="Rangkaian" />
             <NavLink href="/dashboard/chat" icon={<MessageSquare />} label="Mesej" />
             <NavLink href="/dashboard/forum" icon={<Users />} label="Forum" />
+            <NavLink href="/dashboard/branches" icon={<MapPin />} label="Laman Cawangan" />
             <NavLink href="/dashboard/war-room" icon={<Target />} label="War Room" />
             <NavLink href="/dashboard/csr" icon={<DollarSign />} label="CSR" />
             <NavLink href="/dashboard/complaints" icon={<ClipboardList />} label="Aduan Rakyat" />
@@ -169,6 +170,7 @@ export default function ProtectedLayout({
                   <NavLink href="/dashboard/referrals" icon={<Users />} label="Rangkaian" />
                   <NavLink href="/dashboard/chat" icon={<MessageSquare />} label="Mesej" />
                   <NavLink href="/dashboard/forum" icon={<Users />} label="Forum" />
+                  <NavLink href="/dashboard/branches" icon={<MapPin />} label="Laman Cawangan" />
                   <NavLink href="/dashboard/war-room" icon={<Target />} label="War Room" />
                   <NavLink href="/dashboard/csr" icon={<DollarSign />} label="CSR" />
                   <NavLink href="/dashboard/complaints" icon={<ClipboardList />} label="Aduan Rakyat" />
