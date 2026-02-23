@@ -58,6 +58,8 @@ model User {
   forumLikes    ForumLike[]
   forumCommentLikes ForumCommentLike[]
   complaintsReported Complaint[] @relation("ComplaintsReported")
+  pollsCreated  Poll[]    @relation("PollsCreated")
+  pollVotes     PollVote[] @relation("PollVotesByUser")
 }
 
 model AuditLog {
@@ -258,7 +260,7 @@ model Poll {
   question    String
   isActive    Boolean      @default(true)
   createdById String?
-  createdBy   User?        @relation(fields: [createdById], references: [id])
+  createdBy   User?        @relation("PollsCreated", fields: [createdById], references: [id])
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   options     PollOption[]
@@ -280,7 +282,7 @@ model PollVote {
   optionId String
   option   PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
   userId   String
-  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User       @relation("PollVotesByUser", fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime  @default(now())
 
   @@unique([pollId, userId])
