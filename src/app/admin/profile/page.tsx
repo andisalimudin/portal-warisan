@@ -113,11 +113,50 @@ export default function AdminProfilePage() {
     setProfile(prev => prev ? { ...prev, [name]: value } as AdminProfile : prev);
   }
 
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setProfile(prev => prev ? { ...prev, profileImage: url } : prev);
+    if (!file || !profile) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("userId", profile.id);
+
+      const res = await fetch("/api/uploads/profile", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Gagal memuat naik gambar profil.");
+        return;
+      }
+
+      const imageUrl = data.url as string | undefined;
+
+      if (imageUrl) {
+        setProfile(prev => prev ? { ...prev, profileImage: imageUrl } : prev);
+
+        if (typeof window !== "undefined") {
+          try {
+            const raw = window.localStorage.getItem("warisan_user");
+            if (raw) {
+              const basic = JSON.parse(raw);
+              const nextBasic = {
+                ...basic,
+                profileImage: imageUrl,
+              };
+              window.localStorage.setItem("warisan_user", JSON.stringify(nextBasic));
+            }
+          } catch {
+          }
+        }
+      }
+    } catch {
+      setError("Ralat rangkaian semasa memuat naik gambar profil.");
+    }
   }
 
   async function handleSave() {

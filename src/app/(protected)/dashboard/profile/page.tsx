@@ -186,12 +186,49 @@ export default function ProfilePage() {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Create local URL for preview
-      const imageUrl = URL.createObjectURL(file);
-      setUser(prev => (prev ? { ...prev, profileImage: imageUrl } : prev));
+    if (!file || !user) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("userId", user.id);
+
+      const res = await fetch("/api/uploads/profile", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Gagal memuat naik gambar profil.");
+        return;
+      }
+
+      const imageUrl = data.url as string | undefined;
+
+      if (imageUrl) {
+        setUser(prev => (prev ? { ...prev, profileImage: imageUrl } : prev));
+
+        if (typeof window !== "undefined") {
+          try {
+            const raw = window.localStorage.getItem("warisan_user");
+            if (raw) {
+              const basic = JSON.parse(raw);
+              const nextBasic = {
+                ...basic,
+                profileImage: imageUrl,
+              };
+              window.localStorage.setItem("warisan_user", JSON.stringify(nextBasic));
+            }
+          } catch {
+          }
+        }
+      }
+    } catch {
+      alert("Ralat rangkaian semasa memuat naik gambar profil.");
     }
   };
 
