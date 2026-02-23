@@ -91,7 +91,7 @@ export default function ProfilePage() {
             role: u.role ?? "",
             joinDate: u.createdAt ? new Date(u.createdAt).toISOString().slice(0, 10) : "",
             status: u.status ?? "",
-            profileImage: null,
+            profileImage: u.profileImage ?? null,
           };
 
           setUser(profile);

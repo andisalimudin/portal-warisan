@@ -90,7 +90,7 @@ export default function AdminProfilePage() {
             role: u.role ?? "",
             status: u.status ?? "",
             joinedAt: u.createdAt ? new Date(u.createdAt).toISOString().slice(0, 10) : "",
-            profileImage: null,
+            profileImage: u.profileImage ?? null,
           };
 
           setProfile(p);

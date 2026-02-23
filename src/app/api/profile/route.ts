@@ -41,6 +41,7 @@ export async function GET(req: Request) {
         role: user.role,
         status: user.status,
         referralCode: user.referralCode,
+        profileImage: user.profileImage,
         createdAt: user.createdAt,
       },
     });
@@ -103,6 +104,7 @@ export async function PATCH(req: Request) {
         role: user.role,
         status: user.status,
         referralCode: user.referralCode,
+        profileImage: user.profileImage,
         createdAt: user.createdAt,
       },
     });
