@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   title: "Portal ADUN N.52 Sungai Sibuga",
   description: "Portal rasmi untuk penduduk dan ahli kawasan N.52 Sungai Sibuga.",
   manifest: "/manifest.json",
+};
+
+export const viewport: Viewport = {
   themeColor: "#0f172a",
 };
 
