@@ -1,8 +1,50 @@
+ "use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { ArrowRight, Users, Shield, Globe } from "lucide-react";
 
+type PollOptionData = {
+  id: string;
+  text: string;
+  votes: number;
+};
+
+type PollData = {
+  id: string;
+  question: string;
+  options: PollOptionData[];
+  totalVotes: number;
+};
+
 export default function Home() {
+  const [poll, setPoll] = useState<PollData | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadPoll() {
+      try {
+        const res = await fetch("/api/polls/active");
+        const data = await res.json();
+
+        if (!active) return;
+
+        if (res.ok && data.poll) {
+          setPoll(data.poll as PollData);
+        }
+      } catch {
+      }
+    }
+
+    loadPoll();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b bg-white">
@@ -126,6 +168,49 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {poll && (
+          <section className="py-20 bg-white">
+            <div className="container mx-auto px-4 max-w-3xl">
+              <div className="bg-warisan-50 border border-warisan-100 rounded-xl p-6 md:p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Tinjauan Ahli
+                </h2>
+                <p className="text-gray-700 mb-6">
+                  {poll.question}
+                </p>
+                <div className="space-y-4">
+                  {poll.options.map((option) => {
+                    const percentage =
+                      poll.totalVotes > 0
+                        ? Math.round((option.votes / poll.totalVotes) * 100)
+                        : 0;
+
+                    return (
+                      <div key={option.id}>
+                        <div className="flex justify-between items-center mb-1 text-xs md:text-sm text-gray-600">
+                          <span className="truncate">{option.text}</span>
+                          <span>{percentage}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="h-2 rounded-full bg-warisan-600"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="mt-4 text-xs text-gray-500">
+                  {poll.totalVotes > 0
+                    ? `${poll.totalVotes} undian setakat ini. Log masuk ke akaun ahli untuk mengundi.`
+                    : "Belum ada undian. Log masuk ke akaun ahli untuk jadi yang pertama mengundi."}
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
       </main>
 
       <footer className="bg-warisan-950 text-white py-12">

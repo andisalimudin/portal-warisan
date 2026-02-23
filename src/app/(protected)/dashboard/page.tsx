@@ -4,6 +4,20 @@ import { useEffect, useState } from "react";
 import { QrCode, UserCheck, Users, Activity, Map as MapIcon, Copy } from "lucide-react";
 import Image from "next/image";
 
+type PollOptionData = {
+  id: string;
+  text: string;
+  votes: number;
+};
+
+type PollData = {
+  id: string;
+  question: string;
+  options: PollOptionData[];
+  totalVotes: number;
+  userVoteOptionId: string | null;
+};
+
 function formatStatus(status: string) {
   if (status === "APPROVED") return "Aktif";
   if (status === "PENDING") return "Menunggu Kelulusan";
@@ -28,6 +42,10 @@ export default function DashboardPage() {
   const [selectedBranchId, setSelectedBranchId] = useState("");
   const [branchSaving, setBranchSaving] = useState(false);
   const [branchError, setBranchError] = useState<string | null>(null);
+  const [poll, setPoll] = useState<PollData | null>(null);
+  const [pollError, setPollError] = useState<string | null>(null);
+  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
+  const [voting, setVoting] = useState(false);
 
   const hasBranch = !!branchName;
 
@@ -87,6 +105,21 @@ export default function DashboardPage() {
           }
 
           try {
+            const pollRes = await fetch(
+              `/api/polls/active?userId=${encodeURIComponent(id)}`
+            );
+            const pollData = await pollRes.json();
+            if (pollRes.ok && pollData.poll) {
+              const incoming = pollData.poll as PollData;
+              setPoll(incoming);
+              setSelectedOptionId(incoming.userVoteOptionId);
+            } else {
+              setPoll(null);
+            }
+          } catch {
+          }
+
+          try {
             const branchesRes = await fetch("/api/admin/branches");
             const branchesData = await branchesRes.json();
             if (branchesRes.ok && Array.isArray(branchesData.branches)) {
@@ -110,6 +143,46 @@ export default function DashboardPage() {
       setStatusLabel("Maklumat sesi tidak sah");
     }
   }, []);
+
+  async function handleVote() {
+    if (!poll || !selectedOptionId || !userId) {
+      return;
+    }
+
+    setVoting(true);
+    setPollError(null);
+
+    try {
+      const res = await fetch("/api/polls/vote", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          pollId: poll.id,
+          optionId: selectedOptionId,
+          userId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPollError(data.error || "Gagal menghantar undian.");
+        return;
+      }
+
+      if (data.poll) {
+        const updated = data.poll as PollData;
+        setPoll(updated);
+        setSelectedOptionId(updated.userVoteOptionId || selectedOptionId);
+      }
+    } catch {
+      setPollError("Ralat rangkaian semasa menghantar undian.");
+    } finally {
+      setVoting(false);
+    }
+  }
 
   function handleCopyReferral() {
     if (!referralCode) return;
@@ -231,6 +304,64 @@ export default function DashboardPage() {
               {copied ? "Kod Disalin" : "Salin Kod"}
             </button>
           </div>
+
+          {poll && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Tinjauan Ahli</h3>
+              <p className="text-sm text-gray-700 mb-4">
+                {poll.question}
+              </p>
+              <div className="space-y-3">
+                {poll.options.map((option) => {
+                  const percentage =
+                    poll.totalVotes > 0
+                      ? Math.round((option.votes / poll.totalVotes) * 100)
+                      : 0;
+                  const isSelected = selectedOptionId === option.id;
+
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setSelectedOptionId(option.id)}
+                      className={`w-full text-left px-3 py-2 rounded-lg border text-sm transition-colors ${
+                        isSelected
+                          ? "border-warisan-600 bg-warisan-50 text-warisan-900"
+                          : "border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100"
+                      }`}
+                    >
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="truncate">{option.text}</span>
+                        <span className="text-xs text-gray-600">{percentage}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="h-1.5 rounded-full bg-warisan-600"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              {pollError && (
+                <p className="mt-3 text-xs text-red-600">{pollError}</p>
+              )}
+              <button
+                type="button"
+                onClick={handleVote}
+                disabled={!selectedOptionId || voting}
+                className="mt-4 w-full bg-warisan-900 text-white py-2 rounded-lg text-sm font-medium hover:bg-warisan-800 disabled:opacity-50"
+              >
+                {poll.userVoteOptionId ? "Kemaskini Undian" : "Hantar Undian"}
+              </button>
+              <p className="mt-2 text-xs text-gray-500">
+                {poll.totalVotes > 0
+                  ? `${poll.totalVotes} undian setakat ini.`
+                  : "Belum ada undian untuk poll ini."}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

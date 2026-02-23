@@ -252,3 +252,36 @@ model ComplaintTimeline {
   actorName   String?
   createdAt   DateTime        @default(now())
 }
+
+model Poll {
+  id          String       @id @default(uuid())
+  question    String
+  isActive    Boolean      @default(true)
+  createdById String?
+  createdBy   User?        @relation(fields: [createdById], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  options     PollOption[]
+  votes       PollVote[]
+}
+
+model PollOption {
+  id      String     @id @default(uuid())
+  text    String
+  pollId  String
+  poll    Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes   PollVote[]
+}
+
+model PollVote {
+  id       String     @id @default(uuid())
+  pollId   String
+  poll     Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId String
+  option   PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@unique([pollId, userId])
+}

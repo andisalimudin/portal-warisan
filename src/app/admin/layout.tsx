@@ -104,6 +104,7 @@ export default function AdminLayout({
             </div>
             <NavLink href="/admin/communication" icon={<Megaphone />} label="Pengumuman" />
             <NavLink href="/admin/forum-moderation" icon={<MessageSquare />} label="Moderasi Forum" />
+            <NavLink href="/admin/polls" icon={<BarChart3 />} label="Tinjauan Ahli" />
             <NavLink href="/admin/complaints" icon={<ClipboardList />} label="Aduan Rakyat" />
 
             <div className="px-3 py-2 mt-4 text-xs font-semibold text-warisan-400 uppercase tracking-wider">
@@ -199,6 +200,7 @@ export default function AdminLayout({
                   </div>
                   <NavLink href="/admin/communication" icon={<Megaphone />} label="Pengumuman" />
                   <NavLink href="/admin/forum-moderation" icon={<MessageSquare />} label="Moderasi Forum" />
+                  <NavLink href="/admin/polls" icon={<BarChart3 />} label="Tinjauan Ahli" />
                   <NavLink href="/admin/complaints" icon={<ClipboardList />} label="Aduan Rakyat" />
                   <div className="px-3 py-2 mt-4 text-xs font-semibold text-warisan-400 uppercase tracking-wider">
                     Pentadbiran
