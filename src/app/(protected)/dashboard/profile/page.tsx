@@ -42,6 +42,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'info' | 'security'>('info');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -113,10 +114,76 @@ export default function ProfilePage() {
     setUser(prev => (prev ? { ...prev, [name]: value } : prev));
   };
 
-  const handleSave = () => {
-    // Simulate API save
-    setIsEditing(false);
-    alert("Profil berjaya dikemaskini!");
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          fullName: user.fullName,
+          phoneNumber: user.phone || "",
+          address: user.address || "",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Gagal mengemas kini profil.");
+        return;
+      }
+
+      const u = data.user;
+
+      const updated: UserProfile = {
+        id: u.id,
+        fullName: u.fullName ?? "",
+        email: u.email ?? null,
+        phone: u.phoneNumber ?? null,
+        icNumber: u.icNumber ?? null,
+        address: u.address ?? null,
+        city: user.city ?? null,
+        state: u.state ?? null,
+        parliament: u.parliament ?? null,
+        dun: u.dun ?? null,
+        role: u.role ?? "",
+        joinDate: u.createdAt ? new Date(u.createdAt).toISOString().slice(0, 10) : "",
+        status: u.status ?? "",
+        profileImage: user.profileImage,
+      };
+
+      setUser(updated);
+      setIsEditing(false);
+
+      if (typeof window !== "undefined") {
+        try {
+          const raw = window.localStorage.getItem("warisan_user");
+          if (raw) {
+            const basic = JSON.parse(raw);
+            const nextBasic = {
+              ...basic,
+              fullName: updated.fullName,
+              email: updated.email,
+            };
+            window.localStorage.setItem("warisan_user", JSON.stringify(nextBasic));
+          }
+        } catch {
+        }
+      }
+
+      alert("Profil berjaya dikemaskini!");
+    } catch {
+      alert("Ralat rangkaian semasa mengemas kini profil.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -216,10 +283,11 @@ export default function ProfilePage() {
                 </button>
                 <button 
                   onClick={handleSave}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-warisan-600 hover:bg-warisan-700 rounded-lg transition-colors"
+                  disabled={saving}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-warisan-600 hover:bg-warisan-700 rounded-lg transition-colors disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
-                  Simpan
+                  {saving ? "Menyimpan..." : "Simpan"}
                 </button>
               </div>
             ) : (
