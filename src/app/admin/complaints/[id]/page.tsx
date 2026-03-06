@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Clock, MapPin, CheckCircle, AlertCircle, User, Save, AlertTriangle, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, CheckCircle, AlertCircle, User, Save, AlertTriangle, ArrowUpRight, MessageSquare, Share2, X } from "lucide-react";
 import { useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +54,13 @@ export default function AdminComplaintDetailPage() {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [messageError, setMessageError] = useState<string | null>(null);
 
+  // Forum Forwarding State
+  const [showForwardModal, setShowForwardModal] = useState(false);
+  const [forwarding, setForwarding] = useState(false);
+  const [forumCategories, setForumCategories] = useState<{ id: string; name: string }[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [forwardError, setForwardError] = useState<string | null>(null);
+
   useEffect(() => {
     let active = true;
 
@@ -100,6 +107,18 @@ export default function AdminComplaintDetailPage() {
             msgData.error || "Gagal memuatkan mesej aduan."
           );
         }
+
+        // Load forum categories for forwarding
+        const forumRes = await fetch("/api/forum");
+        const forumData = await forumRes.json();
+        if (forumRes.ok && Array.isArray(forumData.categories)) {
+          setForumCategories(forumData.categories);
+          if (forumData.categories.length > 0) {
+            // Default to "Aduan & Cadangan" if exists, else first one
+            const complaintCat = forumData.categories.find((c: any) => c.name.includes("Aduan"));
+            setSelectedCategoryId(complaintCat ? complaintCat.id : forumData.categories[0].id);
+          }
+        }
       } catch {
         if (active) {
           setError("Ralat rangkaian semasa memuatkan aduan.");
@@ -113,6 +132,64 @@ export default function AdminComplaintDetailPage() {
       active = false;
     };
   }, [params]);
+
+  async function handleForwardToForum() {
+    if (!complaint || !selectedCategoryId) return;
+    
+    setForwarding(true);
+    setForwardError(null);
+
+    try {
+      if (typeof window === "undefined") return;
+      const raw = window.localStorage.getItem("warisan_user");
+      let adminId: string | null = null;
+      if (raw) {
+        try {
+          const basic = JSON.parse(raw);
+          if (basic.id) adminId = String(basic.id);
+        } catch {}
+      }
+
+      if (!adminId) {
+        setForwardError("Sesi admin tidak sah. Sila log masuk semula.");
+        setForwarding(false);
+        return;
+      }
+
+      const res = await fetch("/api/admin/complaints/forward-to-forum", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          complaintId: complaint.id,
+          adminId,
+          categoryId: selectedCategoryId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setForwardError(data.error || "Gagal memajukan aduan ke forum.");
+        return;
+      }
+
+      // Success
+      setShowForwardModal(false);
+      alert("Aduan berjaya dimajukan ke forum!");
+      
+      // Reload timeline to show the new event
+      const detailRes = await fetch(`/api/complaints/${encodeURIComponent(complaint.id)}`);
+      const detailData = await detailRes.json();
+      if (detailRes.ok && detailData.complaint) {
+        setComplaint(detailData.complaint as ComplaintDetail);
+      }
+
+    } catch {
+      setForwardError("Ralat rangkaian semasa memproses permintaan.");
+    } finally {
+      setForwarding(false);
+    }
+  }
 
   async function handleSave() {
     if (!complaint) return;
@@ -237,13 +314,21 @@ export default function AdminComplaintDetailPage() {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Kembali ke Senarai
         </Link>
-        <button 
-          onClick={handleSave}
-          disabled={saving || !complaint}
-          className="bg-warisan-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-warisan-800 flex items-center gap-2 disabled:opacity-50"
-        >
-            <Save className="w-4 h-4" /> {saving ? "Menyimpan..." : "Simpan Perubahan"}
-        </button>
+        <div className="flex gap-2">
+            <button 
+              onClick={() => setShowForwardModal(true)}
+              className="bg-white border border-warisan-600 text-warisan-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-warisan-50 flex items-center gap-2"
+            >
+                <Share2 className="w-4 h-4" /> Hantar ke Forum
+            </button>
+            <button 
+              onClick={handleSave}
+              disabled={saving || !complaint}
+              className="bg-warisan-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-warisan-800 flex items-center gap-2 disabled:opacity-50"
+            >
+                <Save className="w-4 h-4" /> {saving ? "Menyimpan..." : "Simpan Perubahan"}
+            </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -498,6 +583,69 @@ export default function AdminComplaintDetailPage() {
             </div>
         </div>
       </div>
+      {/* Forward Modal */}
+      {showForwardModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+              <h3 className="font-bold text-lg text-gray-900">Hantar ke Forum</h3>
+              <button 
+                onClick={() => setShowForwardModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-600">
+                Aduan ini akan dipaparkan di forum awam untuk perbincangan lanjut.
+                Butiran seperti tajuk, huraian, dan lampiran akan dikongsi.
+              </p>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Pilih Kategori Forum
+                </label>
+                <select
+                  value={selectedCategoryId}
+                  onChange={(e) => setSelectedCategoryId(e.target.value)}
+                  className="w-full rounded-lg border-gray-300 focus:ring-warisan-500 focus:border-warisan-500"
+                >
+                  {forumCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {forwardError && (
+                <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" /> {forwardError}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 bg-gray-50 flex justify-end gap-2">
+              <button
+                onClick={() => setShowForwardModal(false)}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
+                disabled={forwarding}
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleForwardToForum}
+                disabled={forwarding}
+                className="px-4 py-2 text-white bg-warisan-600 rounded-lg hover:bg-warisan-700 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+              >
+                {forwarding ? "Sedang Proses..." : "Sahkan & Hantar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
