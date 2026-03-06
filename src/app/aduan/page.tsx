@@ -20,21 +20,27 @@ export default function PublicComplaintPage() {
 
     const formData = new FormData(e.currentTarget);
     
-    // Check file size if a file is selected
-    const file = formData.get("image") as File;
-    if (file && file.size > 100 * 1024 * 1024) { // 100MB
-      setError("Saiz fail gambar terlalu besar. Sila muat naik gambar kurang daripada 100MB.");
+    // Check file size if files are selected
+    const files = formData.getAll("images") as File[];
+    let totalSize = 0;
+    
+    if (files.length > 5) {
+      setError("Anda hanya boleh memuat naik maksimum 5 keping gambar.");
       setLoading(false);
       return;
     }
 
-    // We can't just JSON.stringify FormData with files, so we send FormData directly
-    // Or we can convert file to base64 if the API expects JSON
-    // But better to update API to handle FormData or use a separate upload endpoint
-    // For now, let's convert to base64 to stick with the existing JSON pattern if possible, 
-    // OR better, update the submit to send FormData and update the API to read it.
-    // Given the previous code used JSON body, let's switch to sending FormData to the API 
-    // to handle file uploads properly.
+    for (const file of files) {
+      if (file.size > 0) {
+        totalSize += file.size;
+      }
+    }
+
+    if (totalSize > 200 * 1024 * 1024) { // 200MB
+      setError("Jumlah saiz fail gambar terlalu besar. Sila pastikan jumlah saiz kurang daripada 200MB.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/complaints/public", {
@@ -243,14 +249,15 @@ export default function PublicComplaintPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="image" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="images" className="block text-sm font-medium text-gray-700">
                     Muat Naik Gambar (Pilihan)
                   </label>
                   <input
                     type="file"
-                    id="image"
-                    name="image"
+                    id="images"
+                    name="images"
                     accept="image/*"
+                    multiple
                     className="block w-full text-sm text-gray-500
                       file:mr-4 file:py-2 file:px-4
                       file:rounded-full file:border-0
@@ -259,7 +266,7 @@ export default function PublicComplaintPage() {
                       hover:file:bg-warisan-100"
                   />
                   <p className="text-xs text-gray-500">
-                    Maksimum 100MB. Format: JPG, PNG, GIF.
+                    Maksimum 5 gambar. Jumlah saiz maksimum 200MB. Format: JPG, PNG, GIF.
                   </p>
                 </div>
 

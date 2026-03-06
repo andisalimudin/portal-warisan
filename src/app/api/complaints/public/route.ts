@@ -4,6 +4,7 @@ import { getPrisma } from "@/lib/prisma";
 import { writeFile } from "fs/promises";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
+import * as fs from 'fs';
 
 export async function POST(req: Request) {
   try {
@@ -15,7 +16,9 @@ export async function POST(req: Request) {
     const description = formData.get("description") as string;
     const location = formData.get("location") as string;
     const area = formData.get("area") as string;
-    const image = formData.get("image") as File | null;
+    
+    // Get all images
+    const images = formData.getAll("images") as File[];
 
     // Validation
     if (!name || !title || !category || !description || !location) {
@@ -25,33 +28,48 @@ export async function POST(req: Request) {
       );
     }
 
-    // Process image upload
-    let imageUrl: string | null = null;
-    if (image && image.size > 0) {
-      if (image.size > 100 * 1024 * 1024) {
-        return NextResponse.json(
-          { error: "Saiz gambar terlalu besar (Maksimum 100MB)." },
-          { status: 400 }
-        );
+    // Process image uploads
+    const imageUrls: string[] = [];
+    let totalSize = 0;
+
+    if (images.length > 5) {
+      return NextResponse.json(
+        { error: "Maksimum 5 gambar sahaja dibenarkan." },
+        { status: 400 }
+      );
+    }
+
+    const publicPath = join(process.cwd(), "public", "uploads", "complaints");
+    if (!fs.existsSync(publicPath)){
+      fs.mkdirSync(publicPath, { recursive: true });
+    }
+
+    for (const image of images) {
+      if (image && image.size > 0) {
+        totalSize += image.size;
+        
+        // Individual file size check (optional, but good practice)
+        // Global limit check is done below
       }
+    }
 
-      const bytes = await image.arrayBuffer();
-      const buffer = Buffer.from(bytes);
+    if (totalSize > 200 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: "Jumlah saiz gambar terlalu besar (Maksimum 200MB)." },
+        { status: 400 }
+      );
+    }
 
-      // Create uploads directory if it doesn't exist (handled by OS usually, but good to know path)
-      // For simple local storage in Next.js public folder:
-      const fileName = `${uuidv4()}-${image.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
-      const publicPath = join(process.cwd(), "public", "uploads", "complaints");
-      const filePath = join(publicPath, fileName);
-      
-      // Ensure directory exists
-      const fs = require('fs');
-      if (!fs.existsSync(publicPath)){
-          fs.mkdirSync(publicPath, { recursive: true });
+    for (const image of images) {
+      if (image && image.size > 0) {
+        const bytes = await image.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        const fileName = `${uuidv4()}-${image.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
+        const filePath = join(publicPath, fileName);
+        
+        await writeFile(filePath, buffer);
+        imageUrls.push(`/uploads/complaints/${fileName}`);
       }
-
-      await writeFile(filePath, buffer);
-      imageUrl = `/uploads/complaints/${fileName}`;
     }
 
     const prisma = getPrisma();
@@ -74,8 +92,9 @@ export async function POST(req: Request) {
         reporterPhone: phone || null,
         status: "PENDING",
         priority: "MEDIUM",
-        imageUrl, // Save image URL
-        // reporterId is null for public complaints
+        images: imageUrls, // Save array of image URLs
+        // imageUrl field is deprecated but we can populate it with first image for backward compatibility if needed
+        imageUrl: imageUrls.length > 0 ? imageUrls[0] : null,
         timeline: {
           create: {
             status: "PENDING",
