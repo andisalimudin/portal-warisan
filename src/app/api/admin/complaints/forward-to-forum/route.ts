@@ -44,24 +44,24 @@ export async function POST(req: Request) {
     }
 
     // 3. Create Forum Post
-    // Title format: "Perbincangan Aduan: [Title]"
-    // Content format: Description + Images + Location + Ticket ID
-    let content = `**Butiran Aduan (Tiket: #${complaint.ticketId})**\n\n`;
-    content += `${complaint.description}\n\n`;
-    content += `**Lokasi:** ${complaint.location}`;
+    // Improved Format for better readability
+    let content = `**BUTIRAN ADUAN (Tiket: #${complaint.ticketId})**\n`;
+    content += `\n**Lokasi:**\n${complaint.location}`;
     if (complaint.area) content += ` (${complaint.area})`;
-    content += `\n\n`;
-
+    
+    content += `\n\n**Huraian Masalah:**\n${complaint.description}`;
+    
     if (complaint.images && complaint.images.length > 0) {
-      content += `**Lampiran:**\n`;
+      content += `\n\n**Lampiran Gambar:**\n`;
       complaint.images.forEach((img, idx) => {
-        content += `![Lampiran ${idx + 1}](${img})\n`;
+        // Ensure image URL is absolute/valid if needed, though usually stored as /uploads/...
+        content += `\n![Lampiran ${idx + 1}](${img})`;
       });
     } else if (complaint.imageUrl) {
-        content += `**Lampiran:**\n![Lampiran](${complaint.imageUrl})\n`;
+        content += `\n\n**Lampiran Gambar:**\n\n![Lampiran](${complaint.imageUrl})`;
     }
 
-    content += `\n\n*Topik ini dibuka secara automatik daripada sistem aduan untuk perbincangan lanjut.*`;
+    content += `\n\n---\n*Topik ini dibuka secara automatik daripada sistem aduan untuk perbincangan lanjut.*`;
 
     const post = await prisma.forumPost.create({
       data: {
