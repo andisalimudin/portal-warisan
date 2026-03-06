@@ -53,9 +53,9 @@ export async function POST(req: Request) {
       }
     }
 
-    if (totalSize > 200 * 1024 * 1024) {
+    if (totalSize > 300 * 1024 * 1024) {
       return NextResponse.json(
-        { error: "Jumlah saiz gambar terlalu besar (Maksimum 200MB)." },
+        { error: "Jumlah saiz gambar terlalu besar (Maksimum 300MB)." },
         { status: 400 }
       );
     }

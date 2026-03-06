@@ -36,8 +36,8 @@ export default function PublicComplaintPage() {
       }
     }
 
-    if (totalSize > 200 * 1024 * 1024) { // 200MB
-      setError("Jumlah saiz fail gambar terlalu besar. Sila pastikan jumlah saiz kurang daripada 200MB.");
+    if (totalSize > 300 * 1024 * 1024) { // 300MB
+      setError("Jumlah saiz fail gambar terlalu besar. Sila pastikan jumlah saiz kurang daripada 300MB.");
       setLoading(false);
       return;
     }
@@ -266,7 +266,7 @@ export default function PublicComplaintPage() {
                       hover:file:bg-warisan-100"
                   />
                   <p className="text-xs text-gray-500">
-                    Maksimum 5 gambar. Jumlah saiz maksimum 200MB. Format: JPG, PNG, GIF.
+                    Maksimum 5 gambar. Jumlah saiz maksimum 300MB. Format: JPG, PNG, GIF.
                   </p>
                 </div>
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Search, Filter, AlertCircle, Clock, CheckCircle, ArrowUpRight, MapPin, User } from "lucide-react";
+import { Search, Filter, AlertCircle, Clock, CheckCircle, ArrowUpRight, MapPin, User, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type AdminComplaintItem = {
@@ -119,6 +119,9 @@ export default function AdminComplaintsPage() {
           <p className="text-gray-500">Pantau dan uruskan aduan dari pengundi kawasan.</p>
         </div>
         <div className="flex gap-2">
+            <Link href="/admin/complaints/create" className="flex items-center gap-2 bg-warisan-600 text-white px-4 py-2 rounded-lg hover:bg-warisan-700">
+                <Plus className="w-4 h-4" /> Tambah Aduan
+            </Link>
             <button className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50">
                 <Filter className="w-4 h-4" /> Filter
             </button>

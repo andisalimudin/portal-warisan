@@ -281,15 +281,25 @@ export default function AdminComplaintDetailPage() {
                 {complaint?.images && complaint.images.length > 0 ? (
                   <div className="bg-gray-50 rounded-lg border border-gray-200 p-3 flex flex-col items-start gap-3">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 w-full">
-                      {complaint.images.map((img, idx) => (
-                        <a key={idx} href={img} target="_blank" rel="noopener noreferrer" className="block relative aspect-square">
-                          <img
-                            src={img}
-                            alt={`Lampiran ${idx + 1}`}
-                            className="w-full h-full object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
-                          />
-                        </a>
-                      ))}
+                      {complaint.images.map((img, idx) => {
+                        // Ensure image URL is valid
+                        const imgSrc = img.startsWith('/') ? img : `/${img}`;
+                        return (
+                          <a key={idx} href={imgSrc} target="_blank" rel="noopener noreferrer" className="block relative aspect-square group">
+                            <img
+                              src={imgSrc}
+                              alt={`Lampiran ${idx + 1}`}
+                              className="w-full h-full object-cover rounded-lg border border-gray-200 group-hover:opacity-90 transition-opacity"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=Error';
+                              }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg">
+                                <ArrowUpRight className="text-white opacity-0 group-hover:opacity-100 w-6 h-6 drop-shadow-md" />
+                            </div>
+                          </a>
+                        );
+                      })}
                     </div>
                     <p className="text-xs text-gray-500">
                       Klik gambar untuk paparan penuh.
@@ -297,12 +307,18 @@ export default function AdminComplaintDetailPage() {
                   </div>
                 ) : complaint?.imageUrl ? (
                   <div className="bg-gray-50 rounded-lg border border-gray-200 p-3 flex flex-col items-start gap-3">
-                    <a href={complaint.imageUrl} target="_blank" rel="noopener noreferrer" className="block relative w-full">
+                    <a href={complaint.imageUrl.startsWith('/') ? complaint.imageUrl : `/${complaint.imageUrl}`} target="_blank" rel="noopener noreferrer" className="block relative w-full group">
                        <img
-                        src={complaint.imageUrl}
+                        src={complaint.imageUrl.startsWith('/') ? complaint.imageUrl : `/${complaint.imageUrl}`}
                         alt="Lampiran aduan"
-                        className="max-h-64 rounded-lg object-contain bg-black/5 w-full hover:opacity-90 transition-opacity"
+                        className="max-h-64 rounded-lg object-contain bg-black/5 w-full group-hover:opacity-90 transition-opacity"
+                         onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=Error';
+                          }}
                       />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg">
+                          <ArrowUpRight className="text-white opacity-0 group-hover:opacity-100 w-8 h-8 drop-shadow-md" />
+                      </div>
                     </a>
                     <p className="text-xs text-gray-500">
                       Klik gambar untuk paparan penuh.
