@@ -237,8 +237,12 @@ export default function AdminComplaintDetailPage() {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Kembali ke Senarai
         </Link>
-        <button className="bg-warisan-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-warisan-800 flex items-center gap-2">
-            <Save className="w-4 h-4" /> Simpan Perubahan
+        <button 
+          onClick={handleSave}
+          disabled={saving || !complaint}
+          className="bg-warisan-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-warisan-800 flex items-center gap-2 disabled:opacity-50"
+        >
+            <Save className="w-4 h-4" /> {saving ? "Menyimpan..." : "Simpan Perubahan"}
         </button>
       </div>
 
