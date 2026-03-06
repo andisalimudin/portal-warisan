@@ -64,6 +64,7 @@ export default function Home() {
             <Link href="#" className="text-gray-600 hover:text-warisan-950">Pengenalan</Link>
             <Link href="#visi" className="text-gray-600 hover:text-warisan-950">Visi & Misi</Link>
             <Link href="#berita" className="text-gray-600 hover:text-warisan-950">Berita</Link>
+            <Link href="/aduan" className="text-warisan-600 font-medium hover:text-warisan-800">Aduan Rakyat</Link>
           </nav>
           <div className="flex items-center space-x-4">
             <Link href="/login" className="text-sm font-medium text-gray-700 hover:text-warisan-950">
@@ -237,6 +238,7 @@ export default function Home() {
               <ul className="space-y-2 text-warisan-200">
                 <li><Link href="/register" className="hover:text-white">Daftar Ahli</Link></li>
                 <li><Link href="/login" className="hover:text-white">Log Masuk</Link></li>
+                <li><Link href="/aduan" className="hover:text-white">Aduan Rakyat</Link></li>
                 <li><Link href="#" className="hover:text-white">Hubungi Kami</Link></li>
               </ul>
             </div>
