@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Clock, MapPin, CheckCircle, AlertCircle, User, Save, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, CheckCircle, AlertCircle, User, Save, AlertTriangle, ArrowUpRight } from "lucide-react";
 import { useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
