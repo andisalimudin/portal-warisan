@@ -19,21 +19,27 @@ export default function PublicComplaintPage() {
     setSuccess(false);
 
     const formData = new FormData(e.currentTarget);
-    const data = {
-      name: formData.get("name"),
-      phone: formData.get("phone"),
-      title: formData.get("title"),
-      category: formData.get("category"),
-      location: formData.get("location"),
-      area: formData.get("area"),
-      description: formData.get("description"),
-    };
+    
+    // Check file size if a file is selected
+    const file = formData.get("image") as File;
+    if (file && file.size > 100 * 1024 * 1024) { // 100MB
+      setError("Saiz fail gambar terlalu besar. Sila muat naik gambar kurang daripada 100MB.");
+      setLoading(false);
+      return;
+    }
+
+    // We can't just JSON.stringify FormData with files, so we send FormData directly
+    // Or we can convert file to base64 if the API expects JSON
+    // But better to update API to handle FormData or use a separate upload endpoint
+    // For now, let's convert to base64 to stick with the existing JSON pattern if possible, 
+    // OR better, update the submit to send FormData and update the API to read it.
+    // Given the previous code used JSON body, let's switch to sending FormData to the API 
+    // to handle file uploads properly.
 
     try {
       const res = await fetch("/api/complaints/public", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: formData, // Send FormData directly
       });
 
       const json = await res.json();
@@ -234,6 +240,27 @@ export default function PublicComplaintPage() {
                     placeholder="Sila jelaskan masalah dengan terperinci..."
                     className="w-full rounded-lg border-gray-300 shadow-sm focus:border-warisan-500 focus:ring-warisan-500 sm:text-sm py-2.5 px-3 border"
                   ></textarea>
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="image" className="block text-sm font-medium text-gray-700">
+                    Muat Naik Gambar (Pilihan)
+                  </label>
+                  <input
+                    type="file"
+                    id="image"
+                    name="image"
+                    accept="image/*"
+                    className="block w-full text-sm text-gray-500
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-warisan-50 file:text-warisan-700
+                      hover:file:bg-warisan-100"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Maksimum 100MB. Format: JPG, PNG, GIF.
+                  </p>
                 </div>
 
                 <div className="pt-4">

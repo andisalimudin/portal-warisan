@@ -1,19 +1,21 @@
 
 import { NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
+import { writeFile } from "fs/promises";
+import { join } from "path";
+import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { 
-      name, 
-      phone, 
-      title, 
-      category, 
-      description, 
-      location, 
-      area 
-    } = body;
+    const formData = await req.formData();
+    const name = formData.get("name") as string;
+    const phone = formData.get("phone") as string;
+    const title = formData.get("title") as string;
+    const category = formData.get("category") as string;
+    const description = formData.get("description") as string;
+    const location = formData.get("location") as string;
+    const area = formData.get("area") as string;
+    const image = formData.get("image") as File | null;
 
     // Validation
     if (!name || !title || !category || !description || !location) {
@@ -21,6 +23,35 @@ export async function POST(req: Request) {
         { error: "Sila lengkapkan semua maklumat wajib." },
         { status: 400 }
       );
+    }
+
+    // Process image upload
+    let imageUrl: string | null = null;
+    if (image && image.size > 0) {
+      if (image.size > 100 * 1024 * 1024) {
+        return NextResponse.json(
+          { error: "Saiz gambar terlalu besar (Maksimum 100MB)." },
+          { status: 400 }
+        );
+      }
+
+      const bytes = await image.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      // Create uploads directory if it doesn't exist (handled by OS usually, but good to know path)
+      // For simple local storage in Next.js public folder:
+      const fileName = `${uuidv4()}-${image.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
+      const publicPath = join(process.cwd(), "public", "uploads", "complaints");
+      const filePath = join(publicPath, fileName);
+      
+      // Ensure directory exists
+      const fs = require('fs');
+      if (!fs.existsSync(publicPath)){
+          fs.mkdirSync(publicPath, { recursive: true });
+      }
+
+      await writeFile(filePath, buffer);
+      imageUrl = `/uploads/complaints/${fileName}`;
     }
 
     const prisma = getPrisma();
@@ -43,6 +74,7 @@ export async function POST(req: Request) {
         reporterPhone: phone || null,
         status: "PENDING",
         priority: "MEDIUM",
+        imageUrl, // Save image URL
         // reporterId is null for public complaints
         timeline: {
           create: {
