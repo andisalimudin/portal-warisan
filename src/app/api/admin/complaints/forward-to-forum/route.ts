@@ -44,24 +44,24 @@ export async function POST(req: Request) {
     }
 
     // 3. Create Forum Post
-    // Improved Format for better readability
-    let content = `**BUTIRAN ADUAN (Tiket: #${complaint.ticketId})**\n`;
-    content += `\n**Lokasi:**\n${complaint.location}`;
+    // Improved Format: Use HTML because the forum uses dangerouslySetInnerHTML
+    let content = `<p><strong>BUTIRAN ADUAN (Tiket: #${complaint.ticketId})</strong></p>`;
+    content += `<p><strong>Lokasi:</strong><br/>${complaint.location}`;
     if (complaint.area) content += ` (${complaint.area})`;
+    content += `</p>`;
     
-    content += `\n\n**Huraian Masalah:**\n${complaint.description}`;
+    content += `<p><strong>Huraian Masalah:</strong><br/>${complaint.description.replace(/\n/g, "<br/>")}</p>`;
     
     if (complaint.images && complaint.images.length > 0) {
-      content += `\n\n**Lampiran Gambar:**\n`;
+      content += `<p><strong>Lampiran Gambar:</strong></p>`;
       complaint.images.forEach((img, idx) => {
-        // Ensure image URL is absolute/valid if needed, though usually stored as /uploads/...
-        content += `\n![Lampiran ${idx + 1}](${img})`;
+        content += `<div class="mb-4"><img src="${img}" alt="Lampiran ${idx + 1}" class="rounded-lg border border-gray-200 shadow-sm max-w-full h-auto" style="max-height: 400px;" /></div>`;
       });
     } else if (complaint.imageUrl) {
-        content += `\n\n**Lampiran Gambar:**\n\n![Lampiran](${complaint.imageUrl})`;
+        content += `<p><strong>Lampiran Gambar:</strong></p><div class="mb-4"><img src="${complaint.imageUrl}" alt="Lampiran" class="rounded-lg border border-gray-200 shadow-sm max-w-full h-auto" style="max-height: 400px;" /></div>`;
     }
 
-    content += `\n\n---\n*Topik ini dibuka secara automatik daripada sistem aduan untuk perbincangan lanjut.*`;
+    content += `<hr class="my-4" /><p class="text-sm text-gray-500 italic">Topik ini dibuka secara automatik daripada sistem aduan untuk perbincangan lanjut.</p>`;
 
     const post = await prisma.forumPost.create({
       data: {
