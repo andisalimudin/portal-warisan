@@ -70,13 +70,8 @@ export async function POST(req: Request) {
 
     console.error("LOGIN_API_ERROR", error);
 
-    const message =
-      process.env.NODE_ENV !== "production" && error instanceof Error
-        ? error.message
-        : "Ralat pelayan. Sila cuba lagi sebentar lagi.";
-
     return NextResponse.json(
-      { error: message },
+      { error: "Ralat pelayan. Sila cuba lagi sebentar lagi." },
       { status: 500 }
     );
   }
