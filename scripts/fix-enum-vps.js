@@ -9,7 +9,7 @@ const connectionString = process.argv[2] || process.env.DATABASE_URL;
 
 if (!connectionString) {
   console.error('❌ Sila berikan DATABASE_URL sebagai argument atau set environment variable.');
-  console.error('Contoh: node scripts/fix-enum.js "postgresql://user:pass@localhost:5432/dbname"');
+  console.error('Contoh: node scripts/fix-enum-vps.js "postgresql://user:pass@localhost:5432/dbname"');
   process.exit(1);
 }
 
