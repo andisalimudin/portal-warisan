@@ -15,7 +15,7 @@ type Member = {
   phone: string;
   email: string;
   branch: string;
-  role: "AHLI" | "KETUA_CAWANGAN" | "ADMIN" | "CYBERTROOPER";
+  role: "SUKARELAWAN" | "KETUA_CAWANGAN" | "ADMIN" | "ADUN";
   status: "AKTIF" | "DIGANTUNG" | "MENUNGGU";
   joinedAt: string;
 };
@@ -29,7 +29,7 @@ function getStatusBadge(status: Member["status"]) {
 function getRoleBadge(role: Member["role"]) {
   if (role === "ADMIN") return "bg-purple-100 text-purple-700 border-purple-200";
   if (role === "KETUA_CAWANGAN") return "bg-blue-100 text-blue-700 border-blue-200";
-  if (role === "CYBERTROOPER") return "bg-red-100 text-red-700 border-red-200";
+  if (role === "ADUN") return "bg-red-100 text-red-700 border-red-200";
   return "bg-gray-100 text-gray-700 border-gray-200";
 }
 
@@ -241,31 +241,53 @@ export default function MembersPage() {
     setImporting(false);
   };
 
-  const [form, setForm] = useState<Omit<Member,"id">>({
+  const [form, setForm] = useState<Omit<Member,"id"> & { password?: string; icNumber?: string }>({
     name: "",
     memberId: "",
     phone: "",
     email: "",
     branch: "",
-    role: "AHLI",
+    role: "SUKARELAWAN",
     status: "MENUNGGU",
     joinedAt: new Date().toISOString().slice(0,10),
+    password: "",
+    icNumber: "",
   });
 
-  const submitAdd = () => {
-    const id = Math.random().toString(36).slice(2,9);
-    setMembers(prev => [{ id, ...form }, ...prev]);
-    setShowAdd(false);
-    setForm({
-      name: "",
-      memberId: "",
-      phone: "",
-      email: "",
-      branch: "",
-      role: "AHLI",
-      status: "MENUNGGU",
-      joinedAt: new Date().toISOString().slice(0,10),
-    });
+  const submitAdd = async () => {
+    try {
+      const res = await fetch("/api/admin/members", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Gagal menambah ahli.");
+        return;
+      }
+
+      setMembers(prev => [{ ...data.member }, ...prev]);
+      setShowAdd(false);
+      setForm({
+        name: "",
+        memberId: "",
+        phone: "",
+        email: "",
+        branch: "",
+        role: "SUKARELAWAN",
+        status: "MENUNGGU",
+        joinedAt: new Date().toISOString().slice(0,10),
+        password: "",
+        icNumber: "",
+      });
+    } catch {
+      alert("Ralat rangkaian semasa menambah ahli.");
+    }
   };
 
   const currentEdit = showEditId ? members.find(m => m.id === showEditId) || null : null;
@@ -398,10 +420,10 @@ export default function MembersPage() {
                 defaultValue=""
               >
                 <option value="" disabled>Tukar Peranan</option>
-                <option value="AHLI">Ahli</option>
+                <option value="SUKARELAWAN">Sukarelawan</option>
                 <option value="KETUA_CAWANGAN">Ketua Cawangan</option>
                 <option value="ADMIN">Admin</option>
-                <option value="CYBERTROOPER">Cybertrooper</option>
+                <option value="ADUN">ADUN</option>
               </select>
               <button onClick={clearSelection} className="text-sm text-gray-500 underline">Kosongkan</button>
             </div>
@@ -426,10 +448,10 @@ export default function MembersPage() {
               className="rounded-lg border-gray-300 focus:ring-warisan-500 focus:border-warisan-500"
             >
               <option value="">Semua Peranan</option>
-              <option value="AHLI">Ahli</option>
+              <option value="SUKARELAWAN">Sukarelawan</option>
               <option value="KETUA_CAWANGAN">Ketua Cawangan</option>
               <option value="ADMIN">Admin</option>
-              <option value="CYBERTROOPER">Cybertrooper</option>
+              <option value="ADUN">ADUN</option>
             </select>
             <div className="flex items-center justify-end gap-2">
               <button onClick={selectAll} className="text-sm text-gray-600 underline">Pilih Semua</button>
@@ -480,7 +502,7 @@ export default function MembersPage() {
                   <td className="px-3 py-2">{m.branch}</td>
                   <td className="px-3 py-2">
                     <span className={cn("px-2 py-1 rounded text-xs border", getRoleBadge(m.role))}>
-                      {m.role === "AHLI" ? "Ahli" : m.role === "KETUA_CAWANGAN" ? "Ketua Cawangan" : "Admin"}
+                      {m.role === "SUKARELAWAN" ? "Sukarelawan" : m.role === "KETUA_CAWANGAN" ? "Ketua Cawangan" : m.role === "ADUN" ? "ADUN" : "Admin"}
                     </span>
                   </td>
                   <td className="px-3 py-2">
@@ -555,11 +577,15 @@ export default function MembersPage() {
                 <input value={form.memberId} onChange={(e) => setForm(f => ({ ...f, memberId: e.target.value }))} className="w-full rounded-lg border-gray-300 focus:ring-warisan-500 focus:border-warisan-500" />
               </div>
               <div>
-                <label className="text-sm text-gray-700">Telefon</label>
-                <input value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} className="w-full rounded-lg border-gray-300 focus:ring-warisan-500 focus:border-warisan-500" />
+                <label className="text-sm text-gray-700">No. Telefon</label>
+                <input type="text" value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} className="w-full rounded-lg border-gray-300 focus:ring-warisan-500 focus:border-warisan-500" />
               </div>
               <div>
-                <label className="text-sm text-gray-700">Email</label>
+                <label className="text-sm text-gray-700">No. Kad Pengenalan</label>
+                <input type="text" value={form.icNumber} onChange={(e) => setForm(f => ({ ...f, icNumber: e.target.value }))} className="w-full rounded-lg border-gray-300 focus:ring-warisan-500 focus:border-warisan-500" placeholder="e.g. 900101-12-3456" />
+              </div>
+              <div>
+                <label className="text-sm text-gray-700">Emel</label>
                 <input type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} className="w-full rounded-lg border-gray-300 focus:ring-warisan-500 focus:border-warisan-500" />
               </div>
               <div>
@@ -569,10 +595,10 @@ export default function MembersPage() {
               <div>
                 <label className="text-sm text-gray-700">Peranan</label>
                 <select value={form.role} onChange={(e) => setForm(f => ({ ...f, role: e.target.value as Member["role"] }))} className="w-full rounded-lg border-gray-300 focus:ring-warisan-500 focus:border-warisan-500">
-                  <option value="AHLI">Ahli</option>
+                  <option value="SUKARELAWAN">Sukarelawan</option>
                   <option value="KETUA_CAWANGAN">Ketua Cawangan</option>
                   <option value="ADMIN">Admin</option>
-                  <option value="CYBERTROOPER">Cybertrooper</option>
+                  <option value="ADUN">ADUN</option>
                 </select>
               </div>
               <div>
@@ -582,6 +608,10 @@ export default function MembersPage() {
                   <option value="AKTIF">Aktif</option>
                   <option value="DIGANTUNG">Digantung</option>
                 </select>
+              </div>
+              <div>
+                <label className="text-sm text-gray-700">Kata Laluan</label>
+                <input type="password" value={form.password} onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))} className="w-full rounded-lg border-gray-300 focus:ring-warisan-500 focus:border-warisan-500" placeholder="Biarkan kosong untuk auto-generate" />
               </div>
               <div>
                 <label className="text-sm text-gray-700">Tarikh Sertai</label>
@@ -630,10 +660,10 @@ export default function MembersPage() {
               <div>
                 <label className="text-sm text-gray-700">Peranan</label>
                 <select value={editForm.role} onChange={(e) => setEditForm(f => f ? ({ ...f, role: e.target.value as Member["role"] }) : f)} className="w-full rounded-lg border-gray-300 focus:ring-warisan-500 focus:border-warisan-500">
-                  <option value="AHLI">Ahli</option>
+                  <option value="SUKARELAWAN">Sukarelawan</option>
                   <option value="KETUA_CAWANGAN">Ketua Cawangan</option>
                   <option value="ADMIN">Admin</option>
-                  <option value="CYBERTROOPER">Cybertrooper</option>
+                  <option value="ADUN">ADUN</option>
                 </select>
               </div>
               <div>
@@ -666,10 +696,10 @@ export default function MembersPage() {
               </div>
               <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => setEditForm(f => f ? ({ ...f, role: "AHLI" }) : f)} 
+                  onClick={() => setEditForm(f => f ? ({ ...f, role: "SUKARELAWAN" }) : f)} 
                   className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50"
                 >
-                  Ahli
+                  Sukarelawan
                 </button>
                 <button 
                   onClick={() => setEditForm(f => f ? ({ ...f, role: "KETUA_CAWANGAN" }) : f)} 
@@ -684,10 +714,10 @@ export default function MembersPage() {
                   Admin
                 </button>
                 <button 
-                  onClick={() => setEditForm(f => f ? ({ ...f, role: "CYBERTROOPER" }) : f)} 
+                  onClick={() => setEditForm(f => f ? ({ ...f, role: "ADUN" }) : f)} 
                   className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50"
                 >
-                  Cybertrooper
+                  ADUN
                 </button>
               </div>
             </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 type DbUserStatus = "APPROVED" | "PENDING" | "SUSPENDED" | "REJECTED";
 type DbUserRole = "SUKARELAWAN" | "ADMIN" | "ADUN" | "KETUA_CAWANGAN";
@@ -56,6 +57,84 @@ export async function GET() {
 
     return NextResponse.json(
       { error: "Ralat pelayan. Sila cuba lagi sebentar lagi." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const prisma = getPrisma();
+    const body = await req.json().catch(() => ({}));
+
+    // Basic validation
+    if (!body.name || !body.email || !body.phone || !body.icNumber) {
+        return NextResponse.json(
+            { error: "Sila lengkapkan maklumat wajib (Nama, Emel, Telefon, No. IC)." },
+            { status: 400 }
+        );
+    }
+
+    // Check duplicate
+    const existing = await prisma.user.findFirst({
+        where: {
+            OR: [
+                { email: body.email },
+                { icNumber: body.icNumber }
+            ]
+        }
+    });
+
+    if (existing) {
+        return NextResponse.json(
+            { error: "Emel atau No. IC telah wujud." },
+            { status: 400 }
+        );
+    }
+
+    // Password
+    const rawPassword = body.password || body.icNumber.slice(-6); // Default password: last 6 digits of IC if not provided
+    const passwordHash = await bcrypt.hash(rawPassword, 10);
+
+    const role = mapMemberRoleToUserRole(body.role || "SUKARELAWAN");
+    const status = mapMemberStatusToUserStatus(body.status || "MENUNGGU");
+
+    const newUser = await prisma.user.create({
+        data: {
+            fullName: body.name,
+            email: body.email,
+            phoneNumber: body.phone,
+            icNumber: body.icNumber,
+            passwordHash,
+            dun: body.branch || null,
+            role,
+            status,
+            // Optional fields
+            address: body.address || null,
+            state: body.state || null,
+            parliament: body.parliament || null,
+        }
+    });
+
+    // Format response
+    const member = {
+        id: newUser.id,
+        name: newUser.fullName,
+        memberId: newUser.referralCode,
+        phone: newUser.phoneNumber,
+        email: newUser.email,
+        branch: newUser.dun || "",
+        role: mapUserRoleToMemberRole(newUser.role as DbUserRole),
+        status: mapUserStatusToMemberStatus(newUser.status as DbUserStatus),
+        joinedAt: newUser.createdAt.toISOString().slice(0, 10),
+    };
+
+    return NextResponse.json({ success: true, member });
+
+  } catch (error) {
+    console.error("ADMIN_CREATE_MEMBER_ERROR", error);
+    return NextResponse.json(
+      { error: "Ralat semasa mencipta ahli baru." },
       { status: 500 }
     );
   }
