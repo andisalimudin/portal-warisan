@@ -7,8 +7,10 @@ import { LayoutDashboard, User, Users, MessageSquare, LogOut, Settings, Target, 
 import Image from "next/image";
 
 function formatRole(role: string) {
-  if (role === "AHLI_BIASA") return "Ahli Biasa";
-  if (role.startsWith("ADMIN")) return "Admin";
+  if (role === "ADMIN") return "Admin";
+  if (role === "KETUA_CAWANGAN") return "Ketua Cawangan";
+  if (role === "ADUN") return "ADUN";
+  if (role === "SUKARELAWAN") return "Sukarelawan";
   return role.replace("_", " ");
 }
 
@@ -46,10 +48,10 @@ export default function ProtectedLayout({
       if (role) {
         setDisplayRole(formatRole(role));
       } else {
-        setDisplayRole("Ahli Biasa");
+        setDisplayRole("Sukarelawan");
       }
 
-      if (role.startsWith("ADMIN")) {
+      if (role === "ADMIN") {
         router.replace("/admin/dashboard");
       }
     } catch {

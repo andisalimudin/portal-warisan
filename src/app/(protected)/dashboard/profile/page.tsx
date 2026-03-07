@@ -23,8 +23,10 @@ type UserProfile = {
 };
 
 function formatRole(role: string) {
-  if (role === "AHLI_BIASA") return "Ahli Biasa";
-  if (role.startsWith("ADMIN")) return "Admin";
+  if (role === "ADMIN") return "Admin";
+  if (role === "KETUA_CAWANGAN") return "Ketua Cawangan";
+  if (role === "ADUN") return "ADUN";
+  if (role === "SUKARELAWAN") return "Sukarelawan";
   return role.replace("_", " ");
 }
 

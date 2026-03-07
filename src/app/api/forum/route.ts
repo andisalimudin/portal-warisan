@@ -60,7 +60,7 @@ export async function GET() {
         (await prisma.user.findFirst({
           where: {
             role: {
-              in: ["ADMIN_PUSAT", "ADMIN_NEGERI", "ADMIN_KAWASAN"],
+              in: ["ADMIN", "KETUA_CAWANGAN", "ADUN"],
             },
           },
           orderBy: { createdAt: "asc" },

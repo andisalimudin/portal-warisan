@@ -22,10 +22,10 @@ type AdminProfile = {
 };
 
 function formatRole(role: string) {
-  if (role === "ADMIN_PUSAT") return "Admin Pusat";
-  if (role === "ADMIN_NEGERI") return "Admin Negeri";
-  if (role === "ADMIN_KAWASAN") return "Admin Kawasan";
-  if (role === "AHLI_BIASA") return "Ahli Biasa";
+  if (role === "ADMIN") return "Admin";
+  if (role === "KETUA_CAWANGAN") return "Ketua Cawangan";
+  if (role === "ADUN") return "ADUN";
+  if (role === "SUKARELAWAN") return "Sukarelawan";
   return role.replace("_", " ");
 }
 

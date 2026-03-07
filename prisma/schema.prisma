@@ -10,10 +10,10 @@ datasource db {
 }
 
 enum Role {
-  ADMIN_PUSAT    // Super Admin
-  ADMIN_NEGERI   // State Admin
-  ADMIN_KAWASAN  // Division/Area Admin
-  AHLI_BIASA     // Regular Member
+  ADMIN
+  KETUA_CAWANGAN
+  ADUN
+  SUKARELAWAN
 }
 
 enum Status {
@@ -36,7 +36,7 @@ model User {
   dun           String?   // Dewan Undangan Negeri
   profileImage  String?   // URL to profile image
   
-  role          Role      @default(AHLI_BIASA)
+  role          Role      @default(SUKARELAWAN)
   status        Status    @default(PENDING)
   
   // Referral System
