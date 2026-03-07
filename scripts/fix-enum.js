@@ -3,6 +3,36 @@
 // Ia menggunakan library 'pg' standard untuk berhubung dengan database
 
 const { Client } = require('pg');
+const fs = require('fs');
+const path = require('path');
+
+// Fungsi untuk membaca fail .env secara manual
+function loadEnv() {
+  try {
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      console.log('📄 Membaca fail .env...');
+      const envConfig = fs.readFileSync(envPath, 'utf-8');
+      envConfig.split('\n').forEach((line) => {
+        const match = line.match(/^([^=]+)=(.*)$/);
+        if (match) {
+          const key = match[1].trim();
+          const value = match[2].trim().replace(/^["']|["']$/g, ''); // Buang quotes
+          if (!process.env[key]) {
+            process.env[key] = value;
+          }
+        }
+      });
+    } else {
+        console.log('⚠️ Fail .env tidak dijumpai di root directory.');
+    }
+  } catch (e) {
+    console.error('⚠️ Gagal membaca fail .env:', e.message);
+  }
+}
+
+// Load env vars
+loadEnv();
 
 // Dapatkan connection string dari command line argument atau environment variable
 const connectionString = process.argv[2] || process.env.DATABASE_URL;
