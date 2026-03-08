@@ -15,6 +15,10 @@ rm -rf node_modules package-lock.json .next postcss.config.mjs
 npm cache clean --force
 npm install
 
+# Debug: Check Tailwind
+echo "🔍 Checking Tailwind config..."
+ls -la tailwind.config.ts postcss.config.js src/app/globals.css
+
 # Jalankan migrasi pangkalan data
 echo "🗄️ Mengemaskini pangkalan data..."
 npx prisma generate
