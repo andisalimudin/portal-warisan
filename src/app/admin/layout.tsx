@@ -120,7 +120,7 @@ export default function AdminLayout({
               AI Tools
             </div>
             <NavLink href="/admin/ai-tools" icon={<Wand2 />} label="AI Assistant" />
-          </nav>              </nav>
+          </nav>
         </div>
         <div className="p-4 border-t border-warisan-800">
           <button
