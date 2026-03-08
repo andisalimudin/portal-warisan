@@ -39,7 +39,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    const members = users.map((u) => ({
+    const members = users.map((u: any) => ({
       id: u.id,
       name: u.fullName,
       memberId: u.referralCode,
