@@ -32,7 +32,7 @@ export async function GET(
       );
     }
 
-    const comments = post.comments.map((c) => ({
+    const comments = post.comments.map((c: any) => ({
       id: c.id,
       author: c.author.fullName,
       authorRole: c.author.role,
