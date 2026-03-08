@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     
     if (complaint.images && complaint.images.length > 0) {
       content += `<p><strong>Lampiran Gambar:</strong></p>`;
-      complaint.images.forEach((img, idx) => {
+      complaint.images.forEach((img: string, idx: number) => {
         content += `<div class="mb-4"><img src="${img}" alt="Lampiran ${idx + 1}" class="rounded-lg border border-gray-200 shadow-sm max-w-full h-auto" style="max-height: 400px;" /></div>`;
       });
     } else if (complaint.imageUrl) {
