@@ -18,7 +18,8 @@ import {
   ShieldAlert,
   ClipboardList,
   Menu,
-  X
+  X,
+  Wand2
 } from "lucide-react";
 import Image from "next/image";
 
@@ -114,6 +115,11 @@ export default function AdminLayout({
             <NavLink href="/admin/finance" icon={<DollarSign />} label="Kewangan" />
             <NavLink href="/admin/reports" icon={<FileText />} label="Laporan & Analitik" />
             <NavLink href="/admin/settings" icon={<Settings />} label="Tetapan Sistem" />
+
+            <div className="px-3 py-2 mt-4 text-xs font-semibold text-warisan-400 uppercase tracking-wider">
+              AI Tools
+            </div>
+            <NavLink href="/ai-tools" icon={<Wand2 />} label="AI Assistant" />
           </nav>
         </div>
         <div className="p-4 border-t border-warisan-800">
@@ -209,6 +215,10 @@ export default function AdminLayout({
                   <NavLink href="/admin/finance" icon={<DollarSign />} label="Kewangan" />
                   <NavLink href="/admin/reports" icon={<FileText />} label="Laporan & Analitik" />
                   <NavLink href="/admin/settings" icon={<Settings />} label="Tetapan Sistem" />
+                  <div className="px-3 py-2 mt-4 text-xs font-semibold text-warisan-400 uppercase tracking-wider">
+                    AI Tools
+                  </div>
+                  <NavLink href="/ai-tools" icon={<Wand2 />} label="AI Assistant" />
                 </nav>
               </div>
               <div className="p-4 border-t border-warisan-800">
