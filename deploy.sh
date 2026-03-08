@@ -11,7 +11,7 @@ cd $APP_DIR || exit
 
 # Pasang dependensi
 echo "📦 Memasang dependensi (Clean Install)..."
-rm -rf node_modules package-lock.json
+rm -rf node_modules package-lock.json .next
 npm install
 
 # Jalankan migrasi pangkalan data
