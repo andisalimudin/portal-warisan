@@ -1,0 +1,187 @@
+{
+  "name": "WAHA AI Complaint Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "waha-incoming",
+        "options": {}
+      },
+      "id": "e8d9f0a1-2b3c-4d5e-8f9a-0b1c2d3e4f5g",
+      "name": "WAHA Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.body.event }}",
+              "value2": "message"
+            },
+            {
+              "value1": "={{ $json.body.payload.fromMe }}",
+              "value2": false
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2g3h4i5j",
+      "name": "Filter Incoming Messages",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "Anda adalah ejen AI untuk Parti Warisan. Tugas anda adalah untuk menganalisis mesej WhatsApp yang diterima dan menentukan sama ada ia adalah ADUAN atau PERTANYAAN AM.\n\nJika ia adalah ADUAN:\n1. Ekstrak Tajuk ringkas.\n2. Ekstrak Kategori (Jalan Raya, Lampu Jalan, Sampah, Banjir, Lain-lain).\n3. Ekstrak Lokasi (jika ada).\n4. Ringkaskan Huraian masalah.\n\nFormat output JSON:\n{\n  \"is_complaint\": true,\n  \"title\": \"...\",\n  \"category\": \"...\",\n  \"location\": \"...\",\n  \"description\": \"...\",\n  \"sentiment\": \"negative/neutral\"\n}\n\nJika BUKAN aduan (contoh: 'Hi', 'Terima kasih', 'Siapa ni?'):\n{\n  \"is_complaint\": false,\n  \"reply_message\": \"...cadangan balasan mesra...\"\n}"
+            },
+            {
+              "role": "user",
+              "content": "={{ $json.body.payload.body }}"
+            }
+          ]
+        },
+        "options": {
+          "responseFormat": "json_object"
+        }
+      },
+      "id": "f6e7d8c9-b0a1-4234-5678-901234567890",
+      "name": "AI Analyzer (OpenAI)",
+      "type": "@n8n/n8n-nodes-langchain.chainOpenAi",
+      "typeVersion": 1,
+      "position": [
+        550,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://portal.partiwarisan.org/api/webhooks/waha",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "event",
+              "value": "message"
+            },
+            {
+              "name": "payload",
+              "value": "={{ {\n  \"from\": $node[\"WAHA Webhook\"].json.body.payload.from,\n  \"body\": $json.description ? `[AI Processed] ${$json.description}` : $node[\"WAHA Webhook\"].json.body.payload.body,\n  \"notifyName\": $node[\"WAHA Webhook\"].json.body.payload.notifyName,\n  \"hasMedia\": $node[\"WAHA Webhook\"].json.body.payload.hasMedia,\n  \"ai_analysis\": $json\n} }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p",
+      "name": "Send to Portal API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        800,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://waha.yoursite.com/api/sendText",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chatId",
+              "value": "={{ $node[\"WAHA Webhook\"].json.body.payload.from }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.is_complaint ? \"Terima kasih. Aduan anda telah direkodkan dalam sistem kami dan akan disemak oleh admin.\" : $json.reply_message }}"
+            },
+            {
+              "name": "session",
+              "value": "default"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7q8w9e0r-1t2y-3u4i-5o6p-7a8s9d0f1g2h",
+      "name": "Reply via WAHA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        800,
+        450
+      ]
+    }
+  ],
+  "connections": {
+    "WAHA Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter Incoming Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Incoming Messages": {
+      "main": [
+        [
+          {
+            "node": "AI Analyzer (OpenAI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Analyzer (OpenAI)": {
+      "main": [
+        [
+          {
+            "node": "Send to Portal API",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reply via WAHA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

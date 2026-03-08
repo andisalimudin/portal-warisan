@@ -1,0 +1,248 @@
+{
+"name":"AI WhatsApp Aduan Production",
+"nodes":[
+{
+"name":"WAHA Webhook",
+"type":"n8n-nodes-base.webhook",
+"typeVersion":1,
+"position":[100,300],
+"parameters":{
+"path":"waha-ai-aduan",
+"httpMethod":"POST"
+}
+},
+{
+"name":"Extract Message",
+"type":"n8n-nodes-base.function",
+"typeVersion":1,
+"position":[300,300],
+"parameters":{
+"functionCode":"const body=$json.body;return[{phone:body.from,message:body.text?.body||'',name:body.notifyName||''}];"
+}
+},
+{
+"name":"Validate Message",
+"type":"n8n-nodes-base.if",
+"typeVersion":1,
+"position":[500,300],
+"parameters":{
+"conditions":{
+"string":[{"value1":"={{$json.message}}","operation":"notEmpty"}]
+}
+}
+},
+{
+"name":"Anti Spam",
+"type":"n8n-nodes-base.function",
+"typeVersion":1,
+"position":[700,300],
+"parameters":{
+"functionCode":"return items;"
+}
+},
+{
+"name":"Check Media",
+"type":"n8n-nodes-base.if",
+"typeVersion":1,
+"position":[900,300],
+"parameters":{
+"conditions":{
+"boolean":[{"value1":"={{$json.body?.hasMedia}}","operation":"true"}]
+}
+}
+},
+{
+"name":"Download Image",
+"type":"n8n-nodes-base.httpRequest",
+"typeVersion":1,
+"position":[1100,200],
+"parameters":{
+"url":"={{$json.body?.mediaUrl}}",
+"method":"GET"
+}
+},
+{
+"name":"Vision AI",
+"type":"n8n-nodes-base.openAi",
+"typeVersion":1,
+"position":[1300,200],
+"parameters":{
+"operation":"analyzeImage",
+"model":"gpt-4o-mini"
+}
+},
+{
+"name":"Merge Data",
+"type":"n8n-nodes-base.merge",
+"typeVersion":1,
+"position":[1500,300],
+"parameters":{
+"mode":"mergeByIndex"
+}
+},
+{
+"name":"Get Memory",
+"type":"n8n-nodes-base.redis",
+"typeVersion":1,
+"position":[1700,300],
+"parameters":{
+"operation":"get",
+"key":"={{$json.phone}}"
+}
+},
+{
+"name":"AI Agent",
+"type":"n8n-nodes-base.openAi",
+"typeVersion":1,
+"position":[1900,300],
+"parameters":{
+"operation":"chat",
+"model":"gpt-4o-mini",
+"messages":[
+{
+"role":"system",
+"content":"Anda AI sistem aduan WhatsApp. Kumpul nama,lokasi,kategori,keterangan."
+},
+{
+"role":"user",
+"content":"={{$json.message}}"
+}
+]
+}
+},
+{
+"name":"Parse JSON",
+"type":"n8n-nodes-base.function",
+"typeVersion":1,
+"position":[2100,300],
+"parameters":{
+"functionCode":"const data=JSON.parse($json.message||'{}');return[{...data}];"
+}
+},
+{
+"name":"Update Memory",
+"type":"n8n-nodes-base.redis",
+"typeVersion":1,
+"position":[2300,300],
+"parameters":{
+"operation":"set",
+"key":"={{$json.phone}}",
+"value":"={{JSON.stringify($json)}}"
+}
+},
+{
+"name":"Check Complete",
+"type":"n8n-nodes-base.if",
+"typeVersion":1,
+"position":[2500,300],
+"parameters":{
+"conditions":{
+"string":[{"value1":"={{$json.status}}","operation":"equal","value2":"complete"}]
+}
+}
+},
+{
+"name":"Generate Ticket",
+"type":"n8n-nodes-base.function",
+"typeVersion":1,
+"position":[2700,200],
+"parameters":{
+"functionCode":"const r=Math.floor(Math.random()*9000)+1000;const y=new Date().getFullYear();return[{ticket:`ADU-${y}-${r}`,...$json.data}];"
+}
+},
+{
+"name":"Check Duplicate",
+"type":"n8n-nodes-base.httpRequest",
+"typeVersion":1,
+"position":[2900,200],
+"parameters":{
+"url":"https://domain.com/api/check-duplicate",
+"method":"POST",
+"jsonParameters":true,
+"bodyParametersJson":"={{$json}}"
+}
+},
+{
+"name":"Save Database",
+"type":"n8n-nodes-base.httpRequest",
+"typeVersion":1,
+"position":[3100,200],
+"parameters":{
+"url":"https://domain.com/api/aduan",
+"method":"POST",
+"jsonParameters":true,
+"bodyParametersJson":"={{$json}}"
+}
+},
+{
+"name":"Send Dashboard",
+"type":"n8n-nodes-base.httpRequest",
+"typeVersion":1,
+"position":[3300,200],
+"parameters":{
+"url":"https://domain.com/api/dashboard-update",
+"method":"POST"
+}
+},
+{
+"name":"Reply WhatsApp",
+"type":"n8n-nodes-base.httpRequest",
+"typeVersion":1,
+"position":[3500,300],
+"parameters":{
+"url":"http://localhost:3000/sendText",
+"method":"POST",
+"jsonParameters":true,
+"bodyParametersJson":"{\"phone\":\"={{$json.phone}}\",\"text\":\"Aduan diterima. No Ticket: {{$json.ticket}}\"}"
+}
+},
+{
+"name":"Notify Admin",
+"type":"n8n-nodes-base.httpRequest",
+"typeVersion":1,
+"position":[3700,200],
+"parameters":{
+"url":"http://localhost:3000/sendText",
+"method":"POST",
+"jsonParameters":true,
+"bodyParametersJson":"{\"phone\":\"60123456789\",\"text\":\"Aduan Baru {{$json.ticket}}\"}"
+}
+},
+{
+"name":"Telegram Alert",
+"type":"n8n-nodes-base.telegram",
+"typeVersion":1,
+"position":[3900,200],
+"parameters":{
+"operation":"sendMessage",
+"text":"Aduan Baru {{$json.ticket}}"
+}
+},
+{
+"name":"Email Alert",
+"type":"n8n-nodes-base.emailSend",
+"typeVersion":1,
+"position":[4100,200],
+"parameters":{
+"subject":"Aduan Baru",
+"text":"Ticket {{$json.ticket}} diterima"
+}
+},
+{
+"name":"Save Log",
+"type":"n8n-nodes-base.httpRequest",
+"typeVersion":1,
+"position":[4300,200],
+"parameters":{
+"url":"https://domain.com/api/log",
+"method":"POST"
+}
+}
+],
+"connections":{
+"WAHA Webhook":{"main":[[{"node":"Extract Message","type":"main","index":0}]]},
+"Extract Message":{"main":[[{"node":"Validate Message","type":"main","index":0}]]},
+"Validate Message":{"main":[[{"node":"Anti Spam","type":"main","index":0}]]},
+"Anti Spam":{"main":[[{"node":"Check Media","type":"main","index":0}]]}
+}
+}

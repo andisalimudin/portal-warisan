@@ -1,8 +1,21 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Users, Shield, Globe } from "lucide-react";
 
 export default function Home() {
+  const [news, setNews] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/blog?published=true")
+      .then(res => res.json())
+      .then(data => {
+        if (data.posts) setNews(data.posts.slice(0, 4)); // Show latest 4
+      });
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -117,19 +130,39 @@ export default function Home() {
         {/* Berita Terkini */}
         <section id="berita" className="py-20 bg-warisan-50">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Berita & Pengumuman</h2>
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              <NewsCard 
-                date="12 Jan 2026"
-                title="Pelancaran Portal Digital Rasmi Parti"
-                desc="Parti Warisan melangkah ke era digital dengan pelancaran sistem keahlian baharu."
-              />
-              <NewsCard 
-                date="10 Jan 2026"
-                title="Jelajah Penerangan di Sabah & Sarawak"
-                desc="Pimpinan parti akan turun padang bertemu rakyat di zon Borneo bermula minggu depan."
-              />
-            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Berita & Aktiviti Terkini</h2>
+            
+            {news.length > 0 ? (
+              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                {news.map((item) => (
+                  <Link href={`/blog/${item.slug}`} key={item.id}>
+                    <div className="bg-white rounded-lg overflow-hidden border hover:border-warisan-500 transition-colors group cursor-pointer h-full flex flex-col">
+                      {item.image && (
+                        <div className="h-48 w-full overflow-hidden">
+                          <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        </div>
+                      )}
+                      <div className="p-6 flex-1 flex flex-col">
+                        <span className="text-xs font-semibold text-warisan-700 uppercase tracking-wider">
+                          {new Date(item.createdAt).toLocaleDateString("ms-MY", { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                        <h3 className="text-xl font-bold mt-2 mb-3 text-gray-900 group-hover:text-warisan-800 line-clamp-2">
+                          {item.title}
+                        </h3>
+                        <p className="text-gray-600 line-clamp-3 mb-4 flex-1">
+                          {item.excerpt}
+                        </p>
+                        <div className="mt-auto flex items-center text-warisan-700 font-medium text-sm">
+                          Baca Selanjutnya <ArrowRight className="w-4 h-4 ml-1" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-gray-500">Tiada berita terkini.</p>
+            )}
           </div>
         </section>
       </main>
