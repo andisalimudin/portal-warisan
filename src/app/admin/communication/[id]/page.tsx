@@ -58,28 +58,38 @@ export default function EditCommunicationPage() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
+
+    const files = Array.from(e.target.files);
     
-    if (formData.attachments.length >= 10) {
-        alert("Maksimum 10 fail sahaja dibenarkan.");
+    // Check total limit
+    if (formData.attachments.length + files.length > 10) {
+        alert(`Anda hanya boleh memuat naik maksimum 10 fail. Baki slot: ${10 - formData.attachments.length}`);
         return;
     }
 
-    const file = e.target.files[0];
-    const uploadData = new FormData();
-    uploadData.append("file", file);
+    setLoading(true);
+    const newAttachments: string[] = [];
 
     try {
-        setLoading(true);
-        const res = await fetch("/api/upload", {
-            method: "POST",
-            body: uploadData
-        });
-        const data = await res.json();
-        
-        if (res.ok && data.url) {
+        for (const file of files) {
+            const uploadData = new FormData();
+            uploadData.append("file", file);
+
+            const res = await fetch("/api/upload", {
+                method: "POST",
+                body: uploadData
+            });
+            const data = await res.json();
+            
+            if (res.ok && data.url) {
+                newAttachments.push(data.url);
+            }
+        }
+
+        if (newAttachments.length > 0) {
             setFormData(prev => ({
                 ...prev,
-                attachments: [...prev.attachments, data.url]
+                attachments: [...prev.attachments, ...newAttachments]
             }));
         } else {
             alert("Gagal memuat naik fail.");
@@ -89,6 +99,8 @@ export default function EditCommunicationPage() {
         alert("Ralat memuat naik fail.");
     } finally {
         setLoading(false);
+        // Reset input value to allow re-uploading same files if needed
+        e.target.value = '';
     }
   };
 
@@ -186,12 +198,12 @@ export default function EditCommunicationPage() {
                 </div>
 
                 <label className="border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors cursor-pointer">
-                  <input type="file" className="hidden" onChange={handleFileUpload} />
+                  <input type="file" className="hidden" multiple onChange={handleFileUpload} />
                   <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
                     <Upload className="w-6 h-6 text-gray-400" />
                   </div>
                   <p className="text-sm font-medium text-gray-900">Muat naik gambar atau dokumen</p>
-                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, PDF sehingga 10MB</p>
+                  <p className="text-xs text-gray-500 mt-1">Pilih sehingga 10 fail</p>
                 </label>
             </div>
           </div>
