@@ -65,14 +65,16 @@ export async function POST(req: Request) {
       <div>${senderOrg}</div>
     `;
 
+    console.log("Generating letter with prompt:", prompt);
     const generatedContent = await generateLetter(prompt);
+    console.log("Generated content:", generatedContent.substring(0, 100) + "...");
 
     // Clean up markdown code blocks if any
     const cleanContent = generatedContent.replace(/```html/g, '').replace(/```/g, '');
 
     return NextResponse.json({ content: cleanContent });
-  } catch (error) {
+  } catch (error: any) {
     console.error("GENERATE_ERROR", error);
-    return NextResponse.json({ error: "Gagal menjana surat" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Gagal menjana surat" }, { status: 500 });
   }
 }
