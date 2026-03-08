@@ -32,8 +32,8 @@ export async function POST(req: Request) {
     }
 
     const optionTexts = rawOptions
-      .map((o) => (typeof o === "string" ? o.trim() : ""))
-      .filter((text) => text.length > 0);
+      .map((o: any) => (typeof o === "string" ? o.trim() : ""))
+      .filter((text: string) => text.length > 0);
 
     if (optionTexts.length < 2) {
       return NextResponse.json(
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
         id: poll.id,
         question: poll.question,
         isActive: poll.isActive,
-        options: poll.options.map((o) => ({
+        options: poll.options.map((o: any) => ({
           id: o.id,
           text: o.text,
         })),
