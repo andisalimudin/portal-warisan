@@ -10,8 +10,8 @@ const genAI = new GoogleGenerativeAI(apiKey || "");
 
 export async function generateLetter(prompt: string) {
   try {
-    // Fallback to gemini-pro if flash not available
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // Using gemini-1.5-flash as it is the latest stable and cost-effective model
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     const result = await model.generateContent(prompt);
     const response = await result.response;
