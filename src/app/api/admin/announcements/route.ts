@@ -9,6 +9,7 @@ const announcementSchema = z.object({
   status: z.enum(["DRAFT", "PUBLISHED", "SCHEDULED"]),
   audience: z.enum(["ALL_MEMBERS", "COMMITTEE", "LEADERSHIP", "PUBLIC"]),
   scheduledDate: z.string().optional().nullable(),
+  attachments: z.array(z.string()).optional().default([]),
 });
 
 export async function GET(req: Request) {
@@ -68,6 +69,7 @@ export async function POST(req: Request) {
         status: parsed.data.status,
         audience: parsed.data.audience,
         scheduledDate: parsed.data.scheduledDate ? new Date(parsed.data.scheduledDate) : null,
+        attachments: parsed.data.attachments,
         authorId: admin.id,
       },
     });

@@ -14,12 +14,51 @@ export default function CreateCommunicationPage() {
     audience: 'ALL_MEMBERS',
     content: '',
     status: 'DRAFT',
-    scheduledDate: ''
+    scheduledDate: '',
+    attachments: [] as string[]
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    const uploadData = new FormData();
+    uploadData.append("file", file);
+
+    try {
+        setLoading(true);
+        const res = await fetch("/api/upload", {
+            method: "POST",
+            body: uploadData
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.url) {
+            setFormData(prev => ({
+                ...prev,
+                attachments: [...prev.attachments, data.url]
+            }));
+        } else {
+            alert("Gagal memuat naik fail.");
+        }
+    } catch (error) {
+        console.error("Upload error", error);
+        alert("Ralat memuat naik fail.");
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setFormData(prev => ({
+        ...prev,
+        attachments: prev.attachments.filter((_, i) => i !== index)
+    }));
   };
 
   const handleSubmit = async () => {
@@ -99,13 +138,24 @@ export default function CreateCommunicationPage() {
 
           <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <h3 className="text-sm font-medium text-gray-700 mb-4">Media & Lampiran</h3>
-            <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors cursor-pointer">
+            
+            <div className="space-y-4">
+                {formData.attachments.map((url, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <span className="text-sm truncate max-w-[200px]">{url.split('/').pop()}</span>
+                        <button onClick={() => removeAttachment(idx)} className="text-red-500 hover:text-red-700 text-sm">Buang</button>
+                    </div>
+                ))}
+            </div>
+
+            <label className="border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors cursor-pointer mt-4">
+              <input type="file" className="hidden" onChange={handleFileUpload} />
               <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
                 <Upload className="w-6 h-6 text-gray-400" />
               </div>
               <p className="text-sm font-medium text-gray-900">Muat naik gambar atau dokumen</p>
               <p className="text-xs text-gray-500 mt-1">PNG, JPG, PDF sehingga 10MB</p>
-            </div>
+            </label>
           </div>
         </div>
 

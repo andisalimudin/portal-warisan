@@ -174,6 +174,7 @@ export default function Home() {
                         date={new Date(ann.createdAt).toLocaleDateString("ms-MY")}
                         title={ann.title}
                         desc={ann.content.substring(0, 100) + (ann.content.length > 100 ? "..." : "")}
+                        attachments={ann.attachments}
                     />
                 ))
               ) : (
@@ -300,14 +301,26 @@ function Card({ icon, title, desc }: { icon: React.ReactNode, title: string, des
   )
 }
 
-function NewsCard({ id, date, title, desc }: { id?: string, date: string, title: string, desc: string }) {
+function NewsCard({ id, date, title, desc, attachments }: { id?: string, date: string, title: string, desc: string, attachments?: string[] }) {
   const CardContent = () => (
-    <div className="p-6">
-      <span className="text-xs font-semibold text-warisan-700 uppercase tracking-wider">{date}</span>
-      <h3 className="text-xl font-bold mt-2 mb-3 text-gray-900 group-hover:text-warisan-800">{title}</h3>
-      <p className="text-gray-600 line-clamp-3">{desc}</p>
-      <div className="mt-4 flex items-center text-warisan-700 font-medium text-sm">
-        Baca Selanjutnya <ArrowRight className="w-4 h-4 ml-1" />
+    <div>
+      {attachments && attachments.length > 0 && (
+        <div className="relative h-48 w-full bg-gray-100">
+            <Image 
+                src={attachments[0]} 
+                alt={title}
+                fill
+                className="object-cover"
+            />
+        </div>
+      )}
+      <div className="p-6">
+        <span className="text-xs font-semibold text-warisan-700 uppercase tracking-wider">{date}</span>
+        <h3 className="text-xl font-bold mt-2 mb-3 text-gray-900 group-hover:text-warisan-800">{title}</h3>
+        <p className="text-gray-600 line-clamp-3">{desc}</p>
+        <div className="mt-4 flex items-center text-warisan-700 font-medium text-sm">
+          Baca Selanjutnya <ArrowRight className="w-4 h-4 ml-1" />
+        </div>
       </div>
     </div>
   );

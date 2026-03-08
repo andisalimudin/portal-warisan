@@ -45,6 +45,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         status: body.status,
         audience: body.audience,
         scheduledDate: body.scheduledDate ? new Date(body.scheduledDate) : null,
+        attachments: body.attachments || [],
       },
     });
 

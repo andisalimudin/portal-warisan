@@ -18,7 +18,8 @@ export default function EditCommunicationPage() {
     audience: 'ALL_MEMBERS',
     content: '',
     status: 'DRAFT',
-    scheduledDate: ''
+    scheduledDate: '',
+    attachments: [] as string[]
   });
 
   useEffect(() => {
@@ -36,7 +37,8 @@ export default function EditCommunicationPage() {
           audience: data.announcement.audience,
           content: data.announcement.content,
           status: data.announcement.status,
-          scheduledDate: data.announcement.scheduledDate ? new Date(data.announcement.scheduledDate).toISOString().slice(0, 16) : ''
+          scheduledDate: data.announcement.scheduledDate ? new Date(data.announcement.scheduledDate).toISOString().slice(0, 16) : '',
+          attachments: data.announcement.attachments || []
         });
       } else {
         alert("Pengumuman tidak dijumpai.");
@@ -52,6 +54,44 @@ export default function EditCommunicationPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    const uploadData = new FormData();
+    uploadData.append("file", file);
+
+    try {
+        setLoading(true);
+        const res = await fetch("/api/upload", {
+            method: "POST",
+            body: uploadData
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.url) {
+            setFormData(prev => ({
+                ...prev,
+                attachments: [...prev.attachments, data.url]
+            }));
+        } else {
+            alert("Gagal memuat naik fail.");
+        }
+    } catch (error) {
+        console.error("Upload error", error);
+        alert("Ralat memuat naik fail.");
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setFormData(prev => ({
+        ...prev,
+        attachments: prev.attachments.filter((_, i) => i !== index)
+    }));
   };
 
   const handleSubmit = async () => {
@@ -126,6 +166,28 @@ export default function EditCommunicationPage() {
                 rows={12}
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-warisan-500 focus:border-transparent resize-none"
               />
+            </div>
+
+            <div className="pt-4 border-t border-gray-100">
+                <h3 className="text-sm font-medium text-gray-700 mb-4">Media & Lampiran</h3>
+                
+                <div className="space-y-4 mb-4">
+                    {formData.attachments.map((url, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <span className="text-sm truncate max-w-[200px]">{url.split('/').pop()}</span>
+                            <button onClick={() => removeAttachment(idx)} className="text-red-500 hover:text-red-700 text-sm">Buang</button>
+                        </div>
+                    ))}
+                </div>
+
+                <label className="border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors cursor-pointer">
+                  <input type="file" className="hidden" onChange={handleFileUpload} />
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                    <Upload className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-900">Muat naik gambar atau dokumen</p>
+                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, PDF sehingga 10MB</p>
+                </label>
             </div>
           </div>
         </div>

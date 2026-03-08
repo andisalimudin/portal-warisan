@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Calendar, User, Share2, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, User, Share2, Loader2, Download, FileText } from "lucide-react";
 
 type Announcement = {
   id: string;
@@ -12,6 +13,7 @@ type Announcement = {
   type: string;
   createdAt: string;
   author: { fullName: string };
+  attachments: string[];
 };
 
 export default function AnnouncementDetailPage() {
@@ -116,6 +118,52 @@ export default function AnnouncementDetailPage() {
                 <div className="p-6 md:p-10 prose prose-lg prose-warisan max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap">
                     {data.content}
                 </div>
+
+                {/* Attachments */}
+                {data.attachments && data.attachments.length > 0 && (
+                  <div className="p-6 md:p-10 border-t border-gray-100 bg-gray-50">
+                    <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Lampiran & Galeri
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {data.attachments.map((url, idx) => {
+                        const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+                        const fileName = url.split('/').pop();
+                        
+                        return (
+                          <a 
+                            key={idx} 
+                            href={url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="group block bg-white rounded-lg border border-gray-200 overflow-hidden hover:border-warisan-500 hover:shadow-md transition-all"
+                          >
+                            {isImage ? (
+                              <div className="relative h-48 w-full bg-gray-200">
+                                <Image 
+                                  src={url} 
+                                  alt={`Lampiran ${idx + 1}`}
+                                  fill
+                                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                />
+                              </div>
+                            ) : (
+                              <div className="h-32 flex flex-col items-center justify-center p-4 text-gray-500 bg-gray-50">
+                                <FileText className="w-12 h-12 mb-2 text-warisan-400" />
+                                <span className="text-xs uppercase font-bold text-warisan-600">Dokumen</span>
+                              </div>
+                            )}
+                            <div className="p-3 flex items-center justify-between gap-2">
+                              <span className="text-sm font-medium text-gray-700 truncate flex-1">{fileName}</span>
+                              <Download className="w-4 h-4 text-gray-400 group-hover:text-warisan-600" />
+                            </div>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
             </div>
         </article>
       </main>
