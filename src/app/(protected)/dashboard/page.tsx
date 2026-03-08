@@ -46,6 +46,7 @@ export default function DashboardPage() {
   const [pollError, setPollError] = useState<string | null>(null);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [voting, setVoting] = useState(false);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
 
   const hasBranch = !!branchName;
 
@@ -72,6 +73,16 @@ export default function DashboardPage() {
 
       async function load(id: string) {
         try {
+          try {
+            const annRes = await fetch("/api/announcements");
+            const annData = await annRes.json();
+            if (annRes.ok && annData.announcements) {
+              setAnnouncements(annData.announcements);
+            }
+          } catch (e) {
+            console.error("Failed to fetch announcements", e);
+          }
+
           const [profileRes, referralsRes] = await Promise.all([
             fetch(`/api/profile?userId=${encodeURIComponent(id)}`),
             fetch(`/api/referrals?userId=${encodeURIComponent(id)}`),
@@ -234,16 +245,19 @@ export default function DashboardPage() {
           <div className="bg-white p-6 rounded-xl shadow-sm border">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Pengumuman Terkini</h3>
             <div className="space-y-4">
-              <AnnouncementItem 
-                title="Mesyuarat Agung Tahunan Cawangan" 
-                date="20 Jan 2026"
-                preview="Semua ahli dijemput hadir ke dewan serbaguna..."
-              />
-              <AnnouncementItem 
-                title="Kemaskini Profil Keahlian" 
-                date="15 Jan 2026"
-                preview="Sila pastikan maklumat terkini anda dikemaskini sebelum..."
-              />
+              {announcements.length === 0 ? (
+                <p className="text-gray-500 text-sm">Tiada pengumuman terkini.</p>
+              ) : (
+                announcements.map((ann) => (
+                  <AnnouncementItem 
+                    key={ann.id}
+                    title={ann.title} 
+                    type={ann.type}
+                    date={new Date(ann.createdAt).toLocaleDateString("ms-MY")}
+                    preview={ann.content.substring(0, 100) + (ann.content.length > 100 ? "..." : "")}
+                  />
+                ))
+              )}
             </div>
           </div>
 
@@ -513,20 +527,35 @@ function StatCard({
 
 function AnnouncementItem({
   title,
+  type,
   date,
   preview,
 }: {
   title: string;
+  type?: string;
   date: string;
   preview: string;
 }) {
   return (
     <div className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
-      <div className="flex justify-between items-start mb-1">
-        <h4 className="font-semibold text-gray-900">{title}</h4>
-        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{date}</span>
+      <div className="flex justify-between items-start mb-1 gap-2">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            {type && (
+              <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider ${
+                type === 'NEWS' ? 'bg-blue-100 text-blue-700' : 
+                type === 'DOCUMENT' ? 'bg-orange-100 text-orange-700' : 
+                'bg-purple-100 text-purple-700'
+              }`}>
+                {type === 'NEWS' ? 'Berita' : type === 'DOCUMENT' ? 'Dokumen' : 'Pengumuman'}
+              </span>
+            )}
+            <span className="text-xs text-gray-500">{date}</span>
+          </div>
+          <h4 className="font-semibold text-gray-900 leading-tight">{title}</h4>
+        </div>
       </div>
-      <p className="text-sm text-gray-600">{preview}</p>
+      <p className="text-sm text-gray-600 mt-1 line-clamp-2">{preview}</p>
     </div>
   )
 }

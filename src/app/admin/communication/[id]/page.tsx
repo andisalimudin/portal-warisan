@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Save, Upload, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export default function CreateCommunicationPage() {
+export default function EditCommunicationPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params?.id as string;
+
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
     type: 'ANNOUNCEMENT',
@@ -16,6 +20,34 @@ export default function CreateCommunicationPage() {
     status: 'DRAFT',
     scheduledDate: ''
   });
+
+  useEffect(() => {
+    if (id) fetchAnnouncement();
+  }, [id]);
+
+  const fetchAnnouncement = async () => {
+    try {
+      const res = await fetch(`/api/admin/announcements/${id}`);
+      const data = await res.json();
+      if (data.announcement) {
+        setFormData({
+          title: data.announcement.title,
+          type: data.announcement.type,
+          audience: data.announcement.audience,
+          content: data.announcement.content,
+          status: data.announcement.status,
+          scheduledDate: data.announcement.scheduledDate ? new Date(data.announcement.scheduledDate).toISOString().slice(0, 16) : ''
+        });
+      } else {
+        alert("Pengumuman tidak dijumpai.");
+        router.push("/admin/communication");
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setFetching(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -30,8 +62,8 @@ export default function CreateCommunicationPage() {
 
     setLoading(true);
     try {
-        const res = await fetch("/api/admin/announcements", {
-            method: "POST",
+        const res = await fetch(`/api/admin/announcements/${id}`, {
+            method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData)
         });
@@ -40,7 +72,7 @@ export default function CreateCommunicationPage() {
             router.push("/admin/communication");
         } else {
             const data = await res.json();
-            alert(data.error || "Gagal mencipta pengumuman.");
+            alert(data.error || "Gagal mengemaskini pengumuman.");
         }
     } catch (error) {
         console.error(error);
@@ -49,6 +81,8 @@ export default function CreateCommunicationPage() {
         setLoading(false);
     }
   };
+
+  if (fetching) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-warisan-600" /></div>;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -61,8 +95,8 @@ export default function CreateCommunicationPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Buat Pengumuman Baru</h1>
-          <p className="text-gray-500">Isi maklumat di bawah untuk membuat pengumuman atau buletin baru.</p>
+          <h1 className="text-2xl font-bold text-gray-900">Kemaskini Pengumuman</h1>
+          <p className="text-gray-500">Kemaskini maklumat pengumuman.</p>
         </div>
       </div>
 
@@ -78,7 +112,6 @@ export default function CreateCommunicationPage() {
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                placeholder="Contoh: Notis Mesyuarat Agung Tahunan"
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-warisan-500 focus:border-transparent"
               />
             </div>
@@ -91,20 +124,8 @@ export default function CreateCommunicationPage() {
                 value={formData.content}
                 onChange={handleChange}
                 rows={12}
-                placeholder="Tulis kandungan pengumuman di sini..."
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-warisan-500 focus:border-transparent resize-none"
               />
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-700 mb-4">Media & Lampiran</h3>
-            <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors cursor-pointer">
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                <Upload className="w-6 h-6 text-gray-400" />
-              </div>
-              <p className="text-sm font-medium text-gray-900">Muat naik gambar atau dokumen</p>
-              <p className="text-xs text-gray-500 mt-1">PNG, JPG, PDF sehingga 10MB</p>
             </div>
           </div>
         </div>
@@ -180,7 +201,7 @@ export default function CreateCommunicationPage() {
                 className="w-full flex items-center justify-center gap-2 bg-warisan-600 text-white px-4 py-2 rounded-lg hover:bg-warisan-700 transition-colors disabled:opacity-50"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              <span>Simpan & Terbit</span>
+              <span>Simpan Perubahan</span>
             </button>
           </div>
         </div>
