@@ -13,6 +13,7 @@ cd $APP_DIR || exit
 echo "📦 Memasang dependensi (Clean Install)..."
 rm -rf node_modules package-lock.json .next
 npm install
+npm list @tailwindcss/postcss
 
 # Jalankan migrasi pangkalan data
 echo "🗄️ Mengemaskini pangkalan data..."
