@@ -12,7 +12,12 @@ export async function GET(req: Request) {
         status: "PUBLISHED"
       },
       orderBy: { createdAt: "desc" },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        createdAt: true,
+        attachments: true,
         author: {
           select: { fullName: true }
         }

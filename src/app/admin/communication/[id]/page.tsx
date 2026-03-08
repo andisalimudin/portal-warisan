@@ -59,6 +59,11 @@ export default function EditCommunicationPage() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     
+    if (formData.attachments.length >= 10) {
+        alert("Maksimum 10 fail sahaja dibenarkan.");
+        return;
+    }
+
     const file = e.target.files[0];
     const uploadData = new FormData();
     uploadData.append("file", file);
