@@ -170,6 +170,7 @@ export default function Home() {
                 announcements.slice(0, 4).map((ann) => (
                     <NewsCard
                         key={ann.id}
+                        id={ann.id}
                         date={new Date(ann.createdAt).toLocaleDateString("ms-MY")}
                         title={ann.title}
                         desc={ann.content.substring(0, 100) + (ann.content.length > 100 ? "..." : "")}
@@ -178,11 +179,13 @@ export default function Home() {
               ) : (
                 <>
                   <NewsCard
+                    id="#"
                     date="12 Jan 2026"
                     title="Pelancaran Portal Digital Rasmi Parti"
                     desc="Parti Warisan melangkah ke era digital dengan pelancaran sistem keahlian baharu."
                   />
                   <NewsCard
+                    id="#"
                     date="10 Jan 2026"
                     title="Jelajah Penerangan di Sungai Sibuga"
                     desc="Pimpinan ADUN akan turun padang bertemu rakyat di zon Sungai Sibuga bermula minggu depan."
@@ -297,17 +300,29 @@ function Card({ icon, title, desc }: { icon: React.ReactNode, title: string, des
   )
 }
 
-function NewsCard({ date, title, desc }: { date: string, title: string, desc: string }) {
+function NewsCard({ id, date, title, desc }: { id?: string, date: string, title: string, desc: string }) {
+  const CardContent = () => (
+    <div className="p-6">
+      <span className="text-xs font-semibold text-warisan-700 uppercase tracking-wider">{date}</span>
+      <h3 className="text-xl font-bold mt-2 mb-3 text-gray-900 group-hover:text-warisan-800">{title}</h3>
+      <p className="text-gray-600 line-clamp-3">{desc}</p>
+      <div className="mt-4 flex items-center text-warisan-700 font-medium text-sm">
+        Baca Selanjutnya <ArrowRight className="w-4 h-4 ml-1" />
+      </div>
+    </div>
+  );
+
+  if (id && id !== "#") {
+    return (
+      <Link href={`/announcements/${id}`} className="block bg-white rounded-lg overflow-hidden border hover:border-warisan-500 transition-colors group cursor-pointer">
+        <CardContent />
+      </Link>
+    );
+  }
+
   return (
     <div className="bg-white rounded-lg overflow-hidden border hover:border-warisan-500 transition-colors group cursor-pointer">
-      <div className="p-6">
-        <span className="text-xs font-semibold text-warisan-700 uppercase tracking-wider">{date}</span>
-        <h3 className="text-xl font-bold mt-2 mb-3 text-gray-900 group-hover:text-warisan-800">{title}</h3>
-        <p className="text-gray-600">{desc}</p>
-        <div className="mt-4 flex items-center text-warisan-700 font-medium text-sm">
-          Baca Selanjutnya <ArrowRight className="w-4 h-4 ml-1" />
-        </div>
-      </div>
+      <CardContent />
     </div>
   )
 }
