@@ -28,7 +28,7 @@ export async function GET(
       );
     }
 
-    const result = complaint.timeline.map((m) => ({
+    const result = complaint.timeline.map((m: any) => ({
       id: m.id,
       senderId: null as string | null,
       senderName: m.actorName || "Pengguna Portal",
