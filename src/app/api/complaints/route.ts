@@ -166,7 +166,7 @@ export async function GET(req: NextRequest) {
 
     if (reporterId) {
       complaints = complaints.filter(
-        (c) => c.reporterId && c.reporterId === reporterId
+        (c: any) => c.reporterId && c.reporterId === reporterId
       );
     }
 
