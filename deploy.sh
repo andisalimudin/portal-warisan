@@ -12,6 +12,7 @@ cd $APP_DIR || exit
 # Pasang dependensi
 echo "📦 Memasang dependensi (Clean Install)..."
 rm -rf node_modules package-lock.json .next postcss.config.mjs
+npm cache clean --force
 npm install
 
 # Debug: Check if module exists
