@@ -1,5 +1,6 @@
-@import "tailwindcss";
-@plugin "@tailwindcss/typography";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
@@ -34,43 +35,6 @@
   --warisan-accent-500: #ff0000;
   --warisan-accent-600: #cc0000;
   --warisan-accent-700: #990000;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-warisan-50: var(--warisan-50);
-  --color-warisan-100: var(--warisan-100);
-  --color-warisan-200: var(--warisan-200);
-  --color-warisan-300: var(--warisan-300);
-  --color-warisan-400: var(--warisan-400);
-  --color-warisan-500: var(--warisan-500);
-  --color-warisan-600: var(--warisan-600);
-  --color-warisan-700: var(--warisan-700);
-  --color-warisan-800: var(--warisan-800);
-  --color-warisan-900: var(--warisan-900);
-  --color-warisan-950: var(--warisan-950);
-  --color-warisan-sky-50: var(--warisan-sky-50);
-  --color-warisan-sky-100: var(--warisan-sky-100);
-  --color-warisan-sky-200: var(--warisan-sky-200);
-  --color-warisan-sky-300: var(--warisan-sky-300);
-  --color-warisan-sky-400: var(--warisan-sky-400);
-  --color-warisan-sky-500: var(--warisan-sky-500);
-  --color-warisan-sky-600: var(--warisan-sky-600);
-  --color-warisan-sky-700: var(--warisan-sky-700);
-  --color-warisan-sky-800: var(--warisan-sky-800);
-  --color-warisan-sky-900: var(--warisan-sky-900);
-  --color-warisan-sky-950: var(--warisan-sky-950);
-  --color-warisan-accent-50: var(--warisan-accent-50);
-  --color-warisan-accent-100: var(--warisan-accent-100);
-  --color-warisan-accent-200: var(--warisan-accent-200);
-  --color-warisan-accent-300: var(--warisan-accent-300);
-  --color-warisan-accent-400: var(--warisan-accent-400);
-  --color-warisan-accent-500: var(--warisan-accent-500);
-  --color-warisan-accent-600: var(--warisan-accent-600);
-  --color-warisan-accent-700: var(--warisan-accent-700);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {

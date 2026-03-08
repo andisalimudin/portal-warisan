@@ -15,13 +15,6 @@ rm -rf node_modules package-lock.json .next postcss.config.mjs
 npm cache clean --force
 npm install
 
-# Debug: Check if module exists
-echo "🔍 Debugging environment..."
-node -v
-npm -v
-ls -la node_modules/@tailwindcss || echo "❌ @tailwindcss folder not found"
-ls -la node_modules/@tailwindcss/postcss || echo "❌ @tailwindcss/postcss folder not found"
-
 # Jalankan migrasi pangkalan data
 echo "🗄️ Mengemaskini pangkalan data..."
 npx prisma generate
