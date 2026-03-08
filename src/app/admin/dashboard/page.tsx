@@ -1,6 +1,8 @@
 import { Users, UserPlus, FileCheck, MapPin, Search, Filter, MoreHorizontal, ArrowUpRight } from "lucide-react";
 import { getPrisma } from "@/lib/prisma";
 
+export const dynamic = 'force-dynamic';
+
 type MemberStatus = "AKTIF" | "MENUNGGU" | "DIGANTUNG";
 
 function mapUserStatusToMemberStatus(status: "APPROVED" | "PENDING" | "SUSPENDED" | "REJECTED"): MemberStatus {
