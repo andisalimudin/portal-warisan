@@ -7,8 +7,6 @@ import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import { Loader2, Download, Copy, Save, ArrowLeft, Wand2 } from "lucide-react";
 import Link from "next/link";
-// @ts-ignore
-import html2pdf from "html2pdf.js";
 
 export default function GenerateLetterPage() {
   const [loading, setLoading] = useState(false);
@@ -71,7 +69,7 @@ export default function GenerateLetterPage() {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const element = document.querySelector('.ProseMirror');
     const opt = {
       margin: 20,
@@ -80,7 +78,9 @@ export default function GenerateLetterPage() {
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-    // @ts-ignore
+    
+    // Dynamically import html2pdf only on client side
+    const html2pdf = (await import("html2pdf.js")).default;
     html2pdf().set(opt).from(element).save();
   };
 
