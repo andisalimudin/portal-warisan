@@ -48,7 +48,7 @@ export async function GET(
       createdAt: complaint.createdAt.toISOString(),
       slaDue: complaint.slaDue ? complaint.slaDue.toISOString() : null,
       assignedTo: complaint.assignedTo || "",
-      timeline: complaint.timeline.map((t) => ({
+      timeline: complaint.timeline.map((t: any) => ({
         id: t.id,
         status: t.status,
         title: t.title,
