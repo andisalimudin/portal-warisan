@@ -7,12 +7,8 @@ const globalForPrisma = globalThis as unknown as {
 export function getPrisma() {
   if (!globalForPrisma.prisma) {
     globalForPrisma.prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
-    } as any);
+      log: ['warn', 'error'],
+    });
   }
 
   return globalForPrisma.prisma;
