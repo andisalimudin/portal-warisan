@@ -11,11 +11,12 @@ cd $APP_DIR || exit
 
 # Pasang dependensi
 echo "📦 Memasang dependensi..."
-npm install --production
+npm install
 
-# Jalankan migrasi pangkalan data (jika ada Prisma/DB)
-# npx prisma generate
-# npx prisma migrate deploy
+# Jalankan migrasi pangkalan data
+echo "🗄️ Mengemaskini pangkalan data..."
+npx prisma generate
+npx prisma migrate deploy
 
 # Bina aplikasi Next.js
 echo "🏗️ Membina aplikasi (Build)..."
