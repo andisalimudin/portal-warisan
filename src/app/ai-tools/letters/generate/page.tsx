@@ -80,6 +80,7 @@ export default function GenerateLetterPage() {
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
+    // @ts-ignore
     html2pdf().set(opt).from(element).save();
   };
 
