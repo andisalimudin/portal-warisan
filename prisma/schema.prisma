@@ -77,6 +77,7 @@ model User {
   pollVotes     PollVote[] @relation("PollVotesByUser")
   blogPosts     BlogPost[]
   announcements Announcement[]
+  aiLetters     AiLetter[]
 }
 
 model AuditLog {
@@ -120,6 +121,16 @@ model Announcement {
   attachments   String[]             @default([])
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
+}
+
+model AiLetter {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.Text
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Chat System
