@@ -43,9 +43,7 @@ async function main() {
         role: 'ADMIN',
         status: 'APPROVED',
         phoneNumber: '0123456789',
-        address: 'HQ Parti Warisan',
-        postcode: '88000',
-        city: 'Kota Kinabalu',
+        address: 'HQ Parti Warisan, 88000 Kota Kinabalu',
         state: 'Sabah',
         referralCode: 'ADMIN001'
       }
