@@ -12,7 +12,7 @@ export function getPrisma() {
           url: process.env.DATABASE_URL,
         },
       },
-    });
+    } as any);
   }
 
   return globalForPrisma.prisma;
