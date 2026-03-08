@@ -126,13 +126,13 @@ export async function GET() {
       }
     }
 
-    const resultCategories = categories.map((c) => ({
+    const resultCategories = categories.map((c: any) => ({
       id: c.id,
       name: c.name,
       description: c.description || "",
     }));
 
-    const resultPosts = posts.map((p) => ({
+    const resultPosts = posts.map((p: any) => ({
       id: p.id,
       title: p.title,
       excerpt: buildExcerpt(p.content),
