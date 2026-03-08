@@ -21,7 +21,7 @@ export default async function AdminDashboardPage() {
   const prisma = getPrisma();
 
   const [totalMembers, pendingMembers, branchesCount, latestPending] = await Promise.all([
-    prisma.user.count(),
+    prisma.user.count({ where: { status: "APPROVED" } }),
     prisma.user.count({ where: { status: "PENDING" } }),
     prisma.branch.count(),
     prisma.user.findMany({
@@ -117,7 +117,7 @@ export default async function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {latestPending.map((u) => (
+              {latestPending.map((u: any) => (
                 <TableRow
                   key={u.id}
                   name={u.fullName}
