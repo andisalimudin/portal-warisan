@@ -15,7 +15,9 @@ rm -rf node_modules package-lock.json .next postcss.config.mjs
 npm install
 
 # Debug: Check if module exists
-echo "🔍 Debugging node_modules..."
+echo "🔍 Debugging environment..."
+node -v
+npm -v
 ls -la node_modules/@tailwindcss || echo "❌ @tailwindcss folder not found"
 ls -la node_modules/@tailwindcss/postcss || echo "❌ @tailwindcss/postcss folder not found"
 
