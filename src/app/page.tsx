@@ -20,25 +20,35 @@ type PollData = {
 
 export default function Home() {
   const [poll, setPoll] = useState<PollData | null>(null);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
 
   useEffect(() => {
     let active = true;
 
-    async function loadPoll() {
+    async function fetchData() {
       try {
-        const res = await fetch("/api/polls/active");
-        const data = await res.json();
+        const [pollRes, annRes] = await Promise.all([
+            fetch("/api/polls/active"),
+            fetch("/api/announcements")
+        ]);
+
+        const pollData = await pollRes.json();
+        const annData = await annRes.json();
 
         if (!active) return;
 
-        if (res.ok && data.poll) {
-          setPoll(data.poll as PollData);
+        if (pollRes.ok && pollData.poll) {
+          setPoll(pollData.poll as PollData);
+        }
+
+        if (annRes.ok && annData.announcements) {
+          setAnnouncements(annData.announcements);
         }
       } catch {
       }
     }
 
-    loadPoll();
+    fetchData();
 
     return () => {
       active = false;
@@ -156,16 +166,29 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Berita & Pengumuman</h2>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              <NewsCard
-                date="12 Jan 2026"
-                title="Pelancaran Portal Digital Rasmi Parti"
-                desc="Parti Warisan melangkah ke era digital dengan pelancaran sistem keahlian baharu."
-              />
-              <NewsCard
-                date="10 Jan 2026"
-                title="Jelajah Penerangan di Sungai Sibuga"
-                desc="Pimpinan ADUN akan turun padang bertemu rakyat di zon Sungai Sibuga bermula minggu depan."
-              />
+              {announcements.length > 0 ? (
+                announcements.slice(0, 4).map((ann) => (
+                    <NewsCard
+                        key={ann.id}
+                        date={new Date(ann.createdAt).toLocaleDateString("ms-MY")}
+                        title={ann.title}
+                        desc={ann.content.substring(0, 100) + (ann.content.length > 100 ? "..." : "")}
+                    />
+                ))
+              ) : (
+                <>
+                  <NewsCard
+                    date="12 Jan 2026"
+                    title="Pelancaran Portal Digital Rasmi Parti"
+                    desc="Parti Warisan melangkah ke era digital dengan pelancaran sistem keahlian baharu."
+                  />
+                  <NewsCard
+                    date="10 Jan 2026"
+                    title="Jelajah Penerangan di Sungai Sibuga"
+                    desc="Pimpinan ADUN akan turun padang bertemu rakyat di zon Sungai Sibuga bermula minggu depan."
+                  />
+                </>
+              )}
             </div>
           </div>
         </section>
