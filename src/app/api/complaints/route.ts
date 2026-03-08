@@ -134,7 +134,7 @@ export async function GET(req: NextRequest) {
             },
           });
 
-          const main = complaints.find((c) => c.ticketId === formatTicketNumber(1));
+          const main = complaints.find((c: any) => c.ticketId === formatTicketNumber(1));
           if (main) {
             await prisma.complaint.update({
               where: { id: main.id },
@@ -170,7 +170,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const items = complaints.map((c) => ({
+    const items = complaints.map((c: any) => ({
       id: c.id,
       ticketId: c.ticketId,
       title: c.title,
