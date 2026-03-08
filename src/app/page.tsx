@@ -302,16 +302,32 @@ function Card({ icon, title, desc }: { icon: React.ReactNode, title: string, des
 }
 
 function NewsCard({ id, date, title, desc, attachments }: { id?: string, date: string, title: string, desc: string, attachments?: string[] }) {
+  // Helper to check if file is an image
+  const firstImage = attachments?.find(url => /\.(jpg|jpeg|png|gif|webp)$/i.test(url));
+
   const CardContent = () => (
     <div>
-      {attachments && attachments.length > 0 && (
+      {firstImage ? (
         <div className="relative h-48 w-full bg-gray-100">
             <Image 
-                src={attachments[0]} 
+                src={firstImage} 
                 alt={title}
                 fill
                 className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
+        </div>
+      ) : (
+        <div className="h-48 w-full bg-warisan-50 flex items-center justify-center">
+            <div className="bg-white/50 w-16 h-16 rounded-full flex items-center justify-center">
+                <Image 
+                    src="/logo-warisan-sabah.svg" 
+                    alt="Logo" 
+                    width={40} 
+                    height={40}
+                    className="opacity-50"
+                />
+            </div>
         </div>
       )}
       <div className="p-6">
