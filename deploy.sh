@@ -27,7 +27,7 @@ npx prisma migrate deploy
 
 # Bina aplikasi Next.js
 echo "🏗️ Membina aplikasi (Build)..."
-npm run build
+npm run build || exit 1
 
 # Mulakan semula aplikasi menggunakan PM2
 echo "🔄 Memulakan semula aplikasi dengan PM2..."
