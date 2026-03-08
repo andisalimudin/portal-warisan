@@ -81,6 +81,7 @@ export default function GenerateLetterPage() {
     
     // Dynamically import html2pdf only on client side
     const html2pdf = (await import("html2pdf.js")).default;
+    // @ts-ignore
     html2pdf().set(opt).from(element).save();
   };
 
