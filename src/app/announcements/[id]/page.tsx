@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Calendar, User, Share2, Loader2, Download, FileText } from "lucide-react";
+import { ArrowLeft, Calendar, User, Share2, Loader2, Download, FileText, Check, Facebook, Twitter, MessageCircle } from "lucide-react";
 
 type Announcement = {
   id: string;
@@ -22,6 +22,8 @@ export default function AnnouncementDetailPage() {
   const [data, setData] = useState<Announcement | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
     if (id) fetchAnnouncement();
@@ -40,6 +42,35 @@ export default function AnnouncementDetailPage() {
       setError("Ralat rangkaian.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleShare = (platform: string) => {
+    if (!data) return;
+    const url = window.location.href;
+    const text = `Baca: ${data.title} - Portal Warisan N.52`;
+
+    let shareUrl = "";
+
+    switch (platform) {
+        case "whatsapp":
+            shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
+            break;
+        case "facebook":
+            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            break;
+        case "twitter":
+            shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+            break;
+        case "copy":
+            navigator.clipboard.writeText(url);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+            return;
+    }
+
+    if (shareUrl) {
+        window.open(shareUrl, "_blank", "width=600,height=400");
     }
   };
 
@@ -68,9 +99,33 @@ export default function AnnouncementDetailPage() {
             <div className="font-bold text-lg text-warisan-950 truncate max-w-[200px] md:max-w-none">
                 Portal Rasmi N.52 Sungai Sibuga
             </div>
-            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full" title="Kongsi">
-                <Share2 className="w-5 h-5" />
-            </button>
+            <div className="relative">
+                <button 
+                    onClick={() => setShowShare(!showShare)}
+                    className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors" 
+                    title="Kongsi"
+                >
+                    <Share2 className="w-5 h-5" />
+                </button>
+                {showShare && (
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in duration-200">
+                        <button onClick={() => handleShare('whatsapp')} className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700">
+                            <MessageCircle className="w-4 h-4 text-green-500" /> WhatsApp
+                        </button>
+                        <button onClick={() => handleShare('facebook')} className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700">
+                            <Facebook className="w-4 h-4 text-blue-600" /> Facebook
+                        </button>
+                        <button onClick={() => handleShare('twitter')} className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700">
+                            <Twitter className="w-4 h-4 text-sky-500" /> Twitter / X
+                        </button>
+                        <div className="border-t border-gray-100 my-1"></div>
+                        <button onClick={() => handleShare('copy')} className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700">
+                            {copied ? <Check className="w-4 h-4 text-green-600" /> : <Share2 className="w-4 h-4 text-gray-500" />}
+                            {copied ? "Disalin!" : "Salin Pautan"}
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
       </header>
 
