@@ -11,9 +11,13 @@ cd $APP_DIR || exit
 
 # Pasang dependensi
 echo "📦 Memasang dependensi (Clean Install)..."
-rm -rf node_modules package-lock.json .next
+rm -rf node_modules package-lock.json .next postcss.config.mjs
 npm install
-npm list @tailwindcss/postcss
+
+# Debug: Check if module exists
+echo "🔍 Debugging node_modules..."
+ls -la node_modules/@tailwindcss || echo "❌ @tailwindcss folder not found"
+ls -la node_modules/@tailwindcss/postcss || echo "❌ @tailwindcss/postcss folder not found"
 
 # Jalankan migrasi pangkalan data
 echo "🗄️ Mengemaskini pangkalan data..."
