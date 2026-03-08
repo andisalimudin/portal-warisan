@@ -14,6 +14,7 @@ echo "📦 Memasang dependensi (Clean Install)..."
 rm -rf node_modules package-lock.json .next postcss.config.mjs
 npm cache clean --force
 npm install
+npm install -D tailwindcss@3 postcss@8 autoprefixer@10
 
 # Debug: Check Tailwind
 echo "🔍 Checking Tailwind config..."
