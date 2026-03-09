@@ -10,8 +10,8 @@ const genAI = new GoogleGenerativeAI(apiKey || "");
 
 export async function generateLetter(prompt: string) {
   try {
-    // Fallback to gemini-pro if flash not available
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // Use gemini-1.5-flash for speed and efficiency
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -20,6 +20,17 @@ export async function generateLetter(prompt: string) {
     return text;
   } catch (error) {
     console.error("Ralat menjana surat dengan Gemini:", error);
-    throw new Error("Gagal menjana surat. Sila cuba lagi.");
+    
+    // Fallback to gemini-1.5-pro if flash fails
+    try {
+      console.log("Mencuba model fallback: gemini-1.5-pro...");
+      const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+      const result = await fallbackModel.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    } catch (fallbackError) {
+      console.error("Fallback model failed:", fallbackError);
+      throw new Error("Gagal menjana surat. Sila pastikan API Key adalah sah dan kuota mencukupi.");
+    }
   }
 }
