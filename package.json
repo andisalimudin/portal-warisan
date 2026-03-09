@@ -28,6 +28,7 @@
     "autoprefixer": "^10.4.19",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
+    "groq-sdk": "^0.37.0",
     "html2pdf.js": "^0.14.0",
     "lucide-react": "^0.562.0",
     "mammoth": "^1.11.0",
