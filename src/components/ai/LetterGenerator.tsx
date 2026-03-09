@@ -39,7 +39,7 @@ export default function LetterGenerator() {
       } else {
         setError(result.error || "Ralat tidak diketahui.");
       }
-    } catch (err) {
+    } catch {
       setError("Gagal menghubungi pelayan.");
     } finally {
       setIsLoading(false);
