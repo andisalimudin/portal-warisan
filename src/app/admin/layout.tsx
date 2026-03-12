@@ -19,7 +19,8 @@ import {
   ClipboardList,
   Menu,
   X,
-  Wand2
+  Wand2,
+  Sparkles
 } from "lucide-react";
 import Image from "next/image";
 
@@ -120,6 +121,7 @@ export default function AdminLayout({
               AI Tools
             </div>
             <NavLink href="/admin/ai-tools" icon={<Wand2 />} label="AI Assistant" />
+            <NavLink href="/admin/ai-tools/copywriting" icon={<Sparkles />} label="AI Copywriting" />
           </nav>
         </div>
         <div className="p-4 border-t border-warisan-800">
@@ -219,6 +221,7 @@ export default function AdminLayout({
                     AI Tools
                   </div>
                   <NavLink href="/admin/ai-tools" icon={<Wand2 />} label="AI Assistant" />
+                  <NavLink href="/admin/ai-tools/copywriting" icon={<Sparkles />} label="AI Copywriting" />
                 </nav>
               </div>
               <div className="p-4 border-t border-warisan-800">

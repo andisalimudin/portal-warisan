@@ -34,3 +34,42 @@ export async function generateWithGemini(prompt: string): Promise<string | null>
 
   return null;
 }
+
+export async function generateCopywritingWithGemini(prompt: string, imageBase64?: string, mimeType?: string): Promise<string | null> {
+  if (!genAI) {
+    console.warn("⚠️ GEMINI_API_KEY not found. Skipping Gemini Copywriting.");
+    return null;
+  }
+
+  const modelName = "gemini-1.5-flash"; // Best for multimodal
+  try {
+    console.log(`🚀 Trying GEMINI Copywriting (${modelName})...`);
+    const model = genAI.getGenerativeModel({ model: modelName });
+    
+    let contentParts: any[] = [prompt];
+
+    if (imageBase64 && mimeType) {
+      contentParts = [
+        prompt,
+        {
+          inlineData: {
+            data: imageBase64,
+            mimeType: mimeType,
+          },
+        },
+      ];
+    }
+
+    const result = await model.generateContent(contentParts);
+    const response = await result.response;
+    const text = response.text();
+    
+    if (text) {
+      console.log(`✅ GEMINI Copywriting success!`);
+      return text;
+    }
+  } catch (error) {
+    console.error(`❌ GEMINI Copywriting failed:`, error);
+  }
+  return null;
+}
